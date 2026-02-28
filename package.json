@@ -5,15 +5,16 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.6",
     "astro": "^4.5.10",
-    "better-sqlite3": "^9.4.3"
+    "better-sqlite3": "^12.6.2"
   },
   "devDependencies": {
-    "typescript": "^5.4.3"
+    "typescript": "^5.9.3"
   }
 }
