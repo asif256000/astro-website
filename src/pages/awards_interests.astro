@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import db from '../utils/db.js';
+
+// Query data
+let basic_info = null;
+let honors_and_awards = [];
+let interests = [];
+
+if (db) {
+	try {
+		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
+		const user_filter = basic_info ? basic_info.id : 1;
+
+		honors_and_awards = db.prepare('SELECT * FROM honors_and_awards WHERE fk_user = ?').all(user_filter);
+		interests = db.prepare('SELECT * FROM interests WHERE fk_user = ?').all(user_filter);
+	} catch (error) {
+		console.error('Database query failed:', error.message);
+	}
+}
+
+// Helper to sort interests
+const arrangeInterests = (all) => {
+    const arranged = {};
+    for (const i of all) {
+        if (!arranged[i.subcategory]) arranged[i.subcategory] = [];
+        arranged[i.subcategory].push(i.interest);
+    }
+    return arranged;
+};
+
+const arranged_interests = arrangeInterests(interests);
+---
+
+<BaseLayout 
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    current_page="awards_interests"
+>
+    <Fragment slot="heading">
+        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    </Fragment>
+
+    <div class="main-content">
+        <section id="honors_and_awards">
+            <h2>Honors and Awards</h2>
+            <table>
+            <tbody class="two-cols">
+                {honors_and_awards.map(hna => (
+                    <tr>
+                    <td><b>{hna.title}</b></td>
+                    <td>{hna.description}</td>
+                    </tr>
+                ))}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+
+        <section id="interests">
+            <h2>Interests</h2>
+            <table>
+            <tbody class="two-cols">
+                {Object.entries(arranged_interests).map(([int_subcategory, ints]) => {
+                    const cat_ints = ints.join(", ");
+                    return (
+                        <tr>
+                        <td><b>{int_subcategory}</b></td>
+                        <td>{cat_ints}</td>
+                        </tr>
+                    );
+                })}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+    </div>
+</BaseLayout>

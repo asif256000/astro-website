@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import db from '../utils/db.js';
+
+// Query data
+let basic_info = null;
+let projects = [];
+let certifications = [];
+
+if (db) {
+	try {
+		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
+		const user_filter = basic_info ? basic_info.id : 1;
+
+		projects = db.prepare('SELECT * FROM projects WHERE fk_user = ?').all(user_filter);
+		certifications = db.prepare('SELECT * FROM certifications WHERE fk_user = ?').all(user_filter);
+	} catch (error) {
+		console.error('Database query failed:', error.message);
+	}
+}
+
+const formatDate = (dateString, format = 'YYYY-MM-DD') => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d)) return dateString;
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+};
+---
+
+<BaseLayout 
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    current_page="projects_certificates"
+>
+    <Fragment slot="heading">
+        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    </Fragment>
+
+    <div class="main-content">
+        <section id="projects">
+            <h2>Projects</h2>
+            <table>
+            <tbody class="three-cols">
+                {projects.map(proj => (
+                    <tr>
+                    <td>{proj.title}</td>
+                    <td><p class="justify-text">{proj.description}</p></td>
+                    {proj.link ? (
+                        <td>Link: <a href={proj.link}>{proj.link}</a></td>
+                    ) : (
+                        <td></td>
+                    )}
+                    </tr>
+                ))}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+
+        <section id="certifications">
+            <h2>Certifications</h2>
+            <table>
+            <tbody class="three-cols">
+                {certifications.map(cert => (
+                    <tr>
+                    <td><b>{cert.title}</b> {cert.link ? " issued by " : " at "} {cert.issuer}</td>
+                    <td><p class="justify-text">{cert.description}</p></td>
+                    {cert.link ? (
+                        <td><p><a href={cert.link}>Certificate</a> earned on <b>{formatDate(cert.achievement_date)}</b></p></td>
+                    ) : (
+                        <td></td>
+                    )}
+                    </tr>
+                ))}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+    </div>
+</BaseLayout>

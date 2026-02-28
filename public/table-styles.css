@@ -1,0 +1,70 @@
+table {
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+/* Styles for two-cols table */
+.two-cols td {
+  max-width: 20vw;
+  padding: 5px;
+}
+
+.two-cols td:nth-child(2) {
+  max-width: 60vw;
+}
+
+.two-cols tr,
+.detailed-two-cols tr,
+.equal-two-cols tr,
+.inverted-two-cols tr,
+.three-cols tr {
+  padding: 10px;
+}
+
+.dense-table tr {
+  padding: 0px;
+}
+
+.detailed-two-cols td {
+  padding: 5px;
+}
+
+.detailed-two-cols td:first-child {
+  width: 15vw;
+}
+
+.detailed-two-cols td:nth-child(2) {
+  max-width: 75vw;
+}
+
+.equal-two-cols td {
+  max-width: 40vw;
+  padding: 5px;
+}
+
+.inverted-two-cols td {
+  max-width: 60vw;
+  padding: 5px;
+}
+
+.inverted-two-cols td:nth-child(2) {
+  max-width: 20vw;
+}
+
+/* Styles for three-cols table */
+.three-cols td {
+  max-width: 15vw;
+  padding: 5px;
+}
+
+.three-cols td:nth-child(2) {
+  max-width: 50vw;
+}
+
+.three-cols td:nth-child(3) {
+  max-width: 15vw;
+}
+
+td {
+  word-wrap: break-word;
+}

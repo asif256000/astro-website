@@ -1,0 +1,119 @@
+---
+interface Props {
+	title: string;
+	current_page?: string;
+}
+
+const { title, current_page = 'home' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>{title}</title>
+    <link href="/logos/profile_logo.ico" rel="icon">
+    <link href="/base-style.css" rel="stylesheet">
+    <link href="/dark-mode.css" rel="stylesheet">
+    <link href="/navbar.css" rel="stylesheet">
+    <link href="/responsive-buttons.css" rel="stylesheet">
+    <link href="/responsive.css" rel="stylesheet">
+    <link href="/table-styles.css" rel="stylesheet">
+    <script src="/dark-mode.js" defer></script>
+    <script src="/scroll-functions.js" is:inline></script>
+    <script src="/other-actions.js" is:inline></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <slot name="head" />
+</head>
+
+<body>
+    <button id="scroll-to-top" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">▲</button>
+    <button id="scroll-to-bottom" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })">▼</button>
+
+    <div class="dark-mode-toggle">
+        <p id="toggle-text"></p>
+        <input type="checkbox" id="dark-mode-toggle">
+        <label for="dark-mode-toggle">
+            <span class="toggle-icon" id="moon">&#127761;</span>
+            <span class="toggle-icon" id="sun">&#127774;</span>
+        </label>
+    </div>
+
+    <div id="wrapper">
+            <h1>
+                <div style="display: inline-block; vertical-align: middle;">
+                    <a href="/">
+                        <img src="/logos/profile_logo.webp" alt="Logo" style="width: 50px;" fetchpriority="high">
+                    </a>
+                </div>
+                <div style="display: inline-block; vertical-align: middle;">
+                    <slot name="heading">Profile</slot>
+                </div>
+            </h1>
+            
+            <nav>
+                <div class="selected-item">&nbsp; {
+                    current_page === 'home' ? 'Home' :
+                    current_page === 'overview' ? 'Overview' :
+                    current_page === 'experience_education' ? 'Experience & Education' :
+                    current_page === 'projects_certificates' ? 'Projects & Certifications' :
+                    current_page === 'awards_interests' ? 'Awards & Interests' :
+                    'Resume'
+                } &nbsp;</div>
+                <ul>
+                    <li><a href="/" class={current_page === 'home' ? 'active nav-item' : 'nav-item'}>Home</a></li>
+                    <li><a href="/overview" class={current_page === 'overview' ? 'active nav-item' : 'nav-item'}>Overview</a></li>
+                    <li><a href="/experience_education" class={current_page === 'experience_education' ? 'active nav-item' : 'nav-item'}>Experience & Education</a></li>
+                    <li><a href="/projects_certificates" class={current_page === 'projects_certificates' ? 'active nav-item' : 'nav-item'}>Projects & Certifications</a></li>
+                    <li><a href="/awards_interests" class={current_page === 'awards_interests' ? 'active nav-item' : 'nav-item'}>Awards & Interests</a></li>
+                    <li><a href="/resume" class={current_page === 'resume' ? 'active nav-item' : 'nav-item'}>Resume</a></li>
+                </ul>
+            </nav>
+
+            <slot />
+            
+            <nav>
+                <div class="selected-item">&nbsp; {
+                    current_page === 'home' ? 'Home' :
+                    current_page === 'overview' ? 'Overview' :
+                    current_page === 'experience_education' ? 'Experience & Education' :
+                    current_page === 'projects_certificates' ? 'Projects & Certifications' :
+                    current_page === 'awards_interests' ? 'Awards & Interests' :
+                    'Resume'
+                } &nbsp;</div>
+                <ul>
+                    <li><a href="/" class={current_page === 'home' ? 'active nav-item' : 'nav-item'}>Home</a></li>
+                    <li><a href="/overview" class={current_page === 'overview' ? 'active nav-item' : 'nav-item'}>Overview</a></li>
+                    <li><a href="/experience_education" class={current_page === 'experience_education' ? 'active nav-item' : 'nav-item'}>Experience & Education</a></li>
+                    <li><a href="/projects_certificates" class={current_page === 'projects_certificates' ? 'active nav-item' : 'nav-item'}>Projects & Certifications</a></li>
+                    <li><a href="/awards_interests" class={current_page === 'awards_interests' ? 'active nav-item' : 'nav-item'}>Awards & Interests</a></li>
+                    <li><a href="/resume" class={current_page === 'resume' ? 'active nav-item' : 'nav-item'}>Resume</a></li>
+                </ul>
+            </nav>
+            <hr>
+    </div>
+    
+    <footer>
+        <p>My Profile</p>
+        <div class="social-media-links">
+            <a href="https://www.linkedin.com/in/asif-iqbal-r" target="_blank">
+                <img src="/logos/linkedin.webp" alt="LinkedIn" class="logo" fetchpriority="low">
+            </a>
+            &nbsp;&nbsp;&nbsp;
+            <a href="https://github.com/asif256000" target="_blank">
+                <img src="/logos/github.webp" alt="GitHub" class="logo" fetchpriority="low">
+            </a>
+            &nbsp;&nbsp;&nbsp;
+            <a href="https://scholar.google.com/citations?hl=en&user=EImUgsAAAAAJ" target="_blank">
+                <img src="/logos/gscholar.webp" alt="GoogleScholar" class="logo" fetchpriority="low">
+            </a>
+        </div>
+        <div>
+            <a href="https://github.com/asif256000/my_personal_fast_website">Check out the source code of the website on GitHub</a>
+        </div>
+    </footer>
+
+    <slot name="scripts" />
+    
+</body>
+</html>

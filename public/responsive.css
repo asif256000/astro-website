@@ -1,0 +1,46 @@
+@media (max-width: 768px) {
+  nav ul {
+    display: none; /* Hide the navigation items initially */
+    flex-direction: column;
+    width: 100%;
+    background-color: #444;
+  }
+
+  nav ul.active {
+    display: flex; /* Show the nav items when toggled */
+  }
+
+  nav ul li {
+    margin: 0; /* Remove horizontal margin */
+    text-align: center;
+  }
+
+  .logo {
+    max-width: 10vw;
+    max-height: 10vw;
+  }
+
+  .selected-item {
+    display: block;
+  }
+
+  nav ul.active + .selected-item {
+    display: none;
+  }
+
+  .profile-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .profile-image,
+  .profile-info {
+    flex: 1 1 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .justify-text {
+    text-align: justify;
+  }
+}

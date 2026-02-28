@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import db from '../utils/db.js';
+
+// Query data
+let basic_info = null;
+let resume = [];
+
+if (db) {
+	try {
+		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
+		const user_filter = basic_info ? basic_info.id : 1;
+		resume = db.prepare('SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1').all(user_filter);
+	} catch (error) {
+		console.error('Database query failed:', error.message);
+	}
+}
+
+const resume_path = resume.length > 0 ? resume[0].file_path : '';
+---
+
+<BaseLayout 
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    current_page="resume"
+>
+    <Fragment slot="heading">
+        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    </Fragment>
+
+    <div class="main-content">
+        <section id="resume">
+            <h2>Resume</h2>
+            <p>If you are looking for a resume for a specific role, please let me know via email or phone. I can tailor 
+            the resume for the role with my existing skills and experience, mentioning the relevant technologies and will send it to you.</p>
+            
+            {resume_path && (
+                <>
+                    <a href={`/${resume_path}`} download class="download-link">Resume</a>
+                    <br>
+                    <object class="resume-container" data={`/${resume_path}`} type="application/pdf">
+                        <embed src={`/${resume_path}`} type="application/pdf" />
+                    </object>
+                </>
+            )}
+        </section>
+        <hr class="section-divider" style="max-width: 70vw;">
+    </div>
+</BaseLayout>

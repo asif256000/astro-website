@@ -1,0 +1,127 @@
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  font-size: 1rem;
+  margin: 0;
+  padding: 20px;
+  background-color: #f5f5f5;
+  color: #333;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: #333;
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+.section-divider {
+  max-width: 50vw;
+  margin-left: 0;
+  opacity: 0.5;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+footer {
+  background-color: #e6e5e5;
+  padding: 10px;
+  text-align: center;
+}
+
+p {
+  font-size: 1rem;
+}
+
+#wrapper {
+  flex: 1;
+  transition: margin-left 0.3s ease;
+}
+
+.logo {
+  aspect-ratio: 1/1; /* Maintain aspect ratio */
+  max-width: 5vw;
+  max-height: 5vw;
+  width: auto;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain; /* Ensures image fits the height of the content */
+}
+
+.social-media-links {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 100%;
+}
+
+/* Download Button styles */
+.download-link {
+  display: inline-block;
+  width: 70vw;
+  padding: 5px 0px;
+  text-align: center;
+  background-color: #222;
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.download-link:hover {
+  background-color: #444;
+}
+
+.download-link::before {
+  content: "⬇ Download ";
+}
+
+/* Image and image link styles */
+.image-link {
+  display: inline-block;
+}
+
+.resume-container {
+  width: 70vw;
+  height: 80vh;
+}
+
+/* Profile Section styles */
+.profile-section {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 10px;
+}
+
+.profile-image {
+  flex: 0 0 auto;
+  padding: 10px;
+}
+
+.profile-image img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.profile-info {
+  flex: 1 1 60vw;
+  padding: 10px;
+  text-align: justify;
+}

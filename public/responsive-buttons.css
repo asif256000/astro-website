@@ -1,0 +1,71 @@
+#dark-mode-toggle {
+  display: none;
+}
+
+#dark-mode-toggle:checked + label #moon {
+  transform: translateX(15px);
+  opacity: 1;
+}
+
+#dark-mode-toggle:checked + label #sun {
+  transform: translateX(-10px);
+  opacity: 0;
+}
+
+label {
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+  background-color: #ddd;
+  border-radius: 25px;
+}
+
+.toggle-icon {
+  position: absolute;
+  font-size: 18px;
+  color: #333;
+  transition: transform 0.3s ease;
+}
+
+#moon {
+  transform: translateX(-10px);
+  opacity: 0;
+}
+
+#sun {
+  transform: translateX(15px);
+  opacity: 1;
+}
+
+#toggle-text {
+  transition: opacity 0.5s ease;
+}
+
+#scroll-to-top,
+#scroll-to-bottom {
+  position: fixed;
+  right: 10px;
+  padding: 10px;
+  background-color: #555;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  opacity: 0.1;
+  transition: opacity 1s;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  line-height: 20px;
+  z-index: 10;
+}
+
+#scroll-to-top {
+  top: 20vh;
+}
+
+#scroll-to-bottom {
+  bottom: 10vh;
+}

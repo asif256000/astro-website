@@ -1,0 +1,114 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import db from '../utils/db.js';
+
+// Query data
+let basic_info = null;
+let skills = [];
+let resume = [];
+
+if (db) {
+	try {
+		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
+		const user_filter = basic_info ? basic_info.id : 1;
+		skills = db.prepare('SELECT * FROM skills WHERE fk_user = ?').all(user_filter);
+        resume = db.prepare('SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1').all(user_filter);
+	} catch (error) {
+		console.error('Database query failed. Ensure profile.db has the correct schema.', error.message);
+	}
+}
+
+// Helper to arrange skills like in routes.py
+const arranged_skills = {};
+for (const skill of skills) {
+	if (!arranged_skills[skill.subcategory]) {
+		arranged_skills[skill.subcategory] = { [skill.proficiency]: [skill.skill] };
+	} else {
+		if (!arranged_skills[skill.subcategory][skill.proficiency]) {
+			arranged_skills[skill.subcategory][skill.proficiency] = [skill.skill];
+		} else {
+			arranged_skills[skill.subcategory][skill.proficiency].push(skill.skill);
+		}
+	}
+}
+
+const resume_path = resume.length > 0 ? resume[0].file_path : '';
+---
+
+<BaseLayout 
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    current_page="home"
+>
+    <Fragment slot="heading">
+        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    </Fragment>
+
+    <div class="main-content">
+        <section id="intro">
+            <div class="profile-section">
+                <div class="profile-image">
+                    <a target="_self" href="/overview" class="image-link">
+                        <img src="/image.webp" alt={basic_info?.name || "Profile Image"}>
+                    </a>
+                </div>
+                <div class="profile-info">
+                    <p>Hi there, I am {basic_info?.name}, currently living in {basic_info?.location}.
+                        You can email me at <a href={`mailto:${basic_info?.email}`}>{basic_info?.email}</a> or call/ text at <a href={`tel:${basic_info?.phone}`}>{basic_info?.phone}</a>.
+                        Thank you for visiting <a href="https://github.com/asif256000/my_personal_fast_website">my website</a>, but don't forget to check out my <a href={basic_info?.github}>GitHub</a> 
+                        and <a href={basic_info?.linkedin}>LinkedIn</a> profiles.
+                        <br><br>
+                        Feel free to navigate to other pages in my profile to learn more about me. 
+                        Or if you do not have enough time, you can go to the <a href="/overview">overview page</a> to see a summary of my profile.
+                        <br><br>
+                        <Fragment set:html={basic_info?.intro} />
+                    </p>
+                </div>
+            </div>
+        </section>
+        <hr class="section-divider">
+
+        <section id="skills">
+            <h2>Skills</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="2" style="text-align: left; font-weight: normal; font-size: xx-small; margin: 5px;">*in decreasing order of proficiency for each category...</th>
+                    </tr>
+                </thead>
+                <tbody class="two-cols">
+                    {Object.entries(arranged_skills).map(([skill_category, all_skills], index, array) => {
+                        const adv_skills = (all_skills["Advanced"] || []).join(", ");
+                        const int_skills = (all_skills["Intermediate"] || []).join(", ");
+                        const beg_skills = (all_skills["Beginner"] || []).join(", ");
+                        
+                        return (
+                            <tr>
+                                <td style={index !== array.length - 1 ? "border-bottom: 1px solid #555;" : ""}><b>{skill_category}</b></td>
+                                <td>
+                                    <p style="opacity: 1; margin: 5px;">{adv_skills}</p>
+                                    <p style="opacity: 0.75; margin: 5px;">{int_skills}</p>
+                                    <p style="opacity: 0.5; margin: 5px;">{beg_skills}</p>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </section>
+        <hr class="section-divider" style="max-width: 70vw;">
+        
+        <section id="resume">
+            <h2>Resume</h2>
+            {resume_path && (
+                <>
+                    <a href={`/${resume_path}`} download class="download-link">Resume</a>
+                    <br>
+                    <object class="resume-container" data={`/${resume_path}`} type="application/pdf">
+                        <embed src={`/${resume_path}`} type="application/pdf" />
+                    </object>
+                </>
+            )}
+        </section>
+        <hr class="section-divider" style="max-width: 70vw;">
+    </div>
+</BaseLayout>

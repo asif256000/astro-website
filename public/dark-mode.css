@@ -1,0 +1,92 @@
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4 {
+  color: #fff;
+}
+
+.dark-mode a {
+  color: #909090;
+}
+
+.dark-mode {
+  background-color: #333;
+  color: #fff;
+}
+
+.dark-mode footer {
+  background-color: #444;
+  color: #fff;
+  padding: 10px;
+}
+
+.dark-mode nav ul li a {
+  background-color: #555;
+  border: 2px solid #666;
+  color: #fff;
+}
+
+.dark-mode .selected-item {
+  background-color: #777;
+}
+
+.dark-mode nav ul li a:hover {
+  background-color: #444;
+}
+
+.dark-mode nav ul li a.active {
+  background-color: #444;
+  font-weight: bold;
+  box-shadow: 0 0 10px #fff;
+}
+
+.dark-mode .download-link {
+  background-color: #ddd;
+  color: #000;
+}
+
+.dark-mode .download-link:hover {
+  background-color: #aaa;
+}
+
+.dark-mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.dark-mode .timeline-line {
+  background-color: #ddd;
+}
+
+.dark-mode .timeline-line.dotted {
+  border-left: 2px dotted #ddd;
+  background: none;
+}
+
+.dark-mode .year-marker {
+  color: #ddd;
+}
+
+.dark-mode .timeline-event {
+  box-shadow: 0 0 5px #ddd;
+}
+
+.dark-mode .timeline-heading h3 {
+  box-shadow: 0 0 10px #ddd;
+}
+
+.dark-mode .timeline-event::after {
+  color: #ddd;
+}
+
+.dark-mode .timeline-event::before {
+  color: #ddd;
+}
+
+.dark-mode .detail-box {
+  background-color: #555;
+  color: #ddd;
+}

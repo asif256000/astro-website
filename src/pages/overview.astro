@@ -1,0 +1,265 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import db from '../utils/db.js';
+
+// Query data
+let basic_info = null;
+let education = [];
+let experience = [];
+let skills = [];
+let projects = [];
+let certifications = [];
+let honors_and_awards = [];
+let interests = [];
+let resume = [];
+
+if (db) {
+	try {
+		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
+		const user_filter = basic_info ? basic_info.id : 1;
+
+		education = db.prepare('SELECT * FROM education WHERE fk_user = ?').all(user_filter);
+		experience = db.prepare('SELECT * FROM experience WHERE fk_user = ?').all(user_filter);
+		skills = db.prepare('SELECT * FROM skills WHERE fk_user = ?').all(user_filter);
+		projects = db.prepare('SELECT * FROM projects WHERE fk_user = ?').all(user_filter);
+		certifications = db.prepare('SELECT * FROM certifications WHERE fk_user = ?').all(user_filter);
+		honors_and_awards = db.prepare('SELECT * FROM honors_and_awards WHERE fk_user = ?').all(user_filter);
+		interests = db.prepare('SELECT * FROM interests WHERE fk_user = ?').all(user_filter);
+		resume = db.prepare('SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1').all(user_filter);
+	} catch (error) {
+		console.error('Database query failed:', error.message);
+	}
+}
+
+// Helpers
+const arrangeSkills = (all) => {
+    const arranged = {};
+    for (const s of all) {
+        if (!arranged[s.subcategory]) arranged[s.subcategory] = {};
+        if (!arranged[s.subcategory][s.proficiency]) arranged[s.subcategory][s.proficiency] = [];
+        arranged[s.subcategory][s.proficiency].push(s.skill);
+    }
+    return arranged;
+};
+
+const arrangeInterests = (all) => {
+    const arranged = {};
+    for (const i of all) {
+        if (!arranged[i.subcategory]) arranged[i.subcategory] = [];
+        arranged[i.subcategory].push(i.interest);
+    }
+    return arranged;
+};
+
+const arranged_skills = arrangeSkills(skills);
+const arranged_interests = arrangeInterests(interests);
+
+const formatDate = (dateString, format = 'YYYY-MM') => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d)) return dateString;
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const bMonth = d.toLocaleString('default', { month: 'short' });
+    
+    if (format === 'YYYY-MM') return `${year}-${month}`;
+    if (format === 'YYYY-MMM') return `${year}-${bMonth}`;
+    return `${year}-${month}`;
+};
+
+const curr_date = new Date().toISOString().slice(0, 7);
+const resume_path = resume.length > 0 ? resume[0].file_path : '';
+---
+
+<BaseLayout 
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    current_page="overview"
+>
+    <!-- Extra head elements -->
+    <Fragment slot="head">
+        <link href="/timeline.css" rel="stylesheet">
+    </Fragment>
+
+    <Fragment slot="scripts">
+        <script src="/timeline.js" is:inline></script>
+    </Fragment>
+
+    <Fragment slot="heading">
+        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    </Fragment>
+
+    <div class="main-content">
+        <section id="intro">
+            <p style="text-align: justify;">Hi, I am {basic_info?.name}, currently residing in {basic_info?.location}.
+            <br><br>
+            You can reach me at <a href={`mailto:${basic_info?.email}`}>{basic_info?.email}</a> or <a href={`tel:${basic_info?.phone}`}>{basic_info?.phone}</a> ,
+            or check out my <a href={basic_info?.linkedin}>LinkedIn</a> or <a href={basic_info?.github}>GitHub</a> profiles.</p>
+        </section>
+        <hr class="section-divider">
+
+        <section id="timeline">
+        <h2>My Timeline</h2>
+        <p style="font-size: small; margin: 15px;">* Hover/Click for details</p>
+            <div class="timeline">
+                <div class="timeline-heading left-heading"><h3>Education</h3></div>
+                <div class="timeline-heading right-heading"><h3>Experiences</h3></div>
+
+                {education.map(edu => (
+                    <div class="timeline-event education" 
+                         data-start={formatDate(edu.duration_start, 'YYYY-MM')} 
+                         data-end={edu.duration_end ? formatDate(edu.duration_end, 'YYYY-MM') : curr_date}>
+                        <div class="content">
+                            <h3>{edu.degree}</h3>
+                            <h4>{edu.major}</h4>
+                            <p>{edu.institution}</p>
+                        </div>
+                        <div class="detail-box">
+                            <a href={edu.institution_link} class="timeline-logo-link">
+                                <img src={`/logos/${edu.institution_logo}.webp`} alt={edu.institution} class="logo" fetchpriority="low">
+                            </a>
+                            <div class="details">
+                                <strong>Degree:</strong> {edu.degree}<br>
+                                <strong>Field:</strong> {edu.major}<br>
+                                <strong>Institution:</strong> {edu.institution}<br>
+                                <strong>Location:</strong> {edu.location}<br>
+                                <strong>Duration:</strong> {formatDate(edu.duration_start, 'YYYY-MM')} to {edu.duration_end ? formatDate(edu.duration_end, 'YYYY-MM') : 'Present'}<br>
+                                <strong>{(!edu.duration_end || new Date(edu.duration_end) > new Date()) ? "Grade so far" : "Final grade"}:</strong> {edu.gpa}<br>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
+                {experience.map(exp => (
+                    <div class="timeline-event experience" 
+                         data-start={formatDate(exp.duration_start, 'YYYY-MM')} 
+                         data-end={exp.duration_end ? formatDate(exp.duration_end, 'YYYY-MM') : curr_date}>
+                        <div class="content">
+                            <h3>{exp.title}</h3>
+                            <p>{exp.company}</p>
+                        </div>
+                        <div class="detail-box">
+                            <a href={exp.company_link} class="timeline-logo-link">
+                                    <img src={`/logos/${exp.company_logo}.webp`} alt={exp.company} class="logo" fetchpriority="low">
+                            </a>
+                            <div class="details">
+                                <strong>Title:</strong> {exp.title}<br>
+                                <strong>Organization:</strong> {exp.company}<br>
+                                <strong>Location:</strong> {exp.location}<br>
+                                <strong>Duration:</strong> {formatDate(exp.duration_start, 'YYYY-MM')} to {exp.duration_end ? formatDate(exp.duration_end, 'YYYY-MM') : 'Present'}
+                                {exp.tech_stack && (
+                                    <><br><strong>Tech stack used:</strong> {exp.tech_stack}</>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                
+            </div>
+        </section>
+        <hr class="section-divider">
+
+        <section id="skills">
+            <h2>Proficient Skills</h2>
+            <table>
+            <tbody class="two-cols dense-table">
+                {Object.entries(arranged_skills).map(([skill_category, all_skills]) => {
+                    const adv_skills = (all_skills["Advanced"] || []).join(", ");
+                    const int_skills = (all_skills["Intermediate"] || []).join(", ");
+
+                    return (
+                        <tr>
+                            <td><b>{skill_category}</b></td>
+                            <td>
+                                <p style="margin: 5px;">
+                                    <span style="opacity: 1;">{adv_skills}</span>
+                                    {int_skills && (
+                                        <span style="opacity: 0.6;"> | {int_skills}</span>
+                                    )}
+                                </p>
+                            </td>
+                        </tr>
+                    );
+                })}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+
+        <section id="projects">
+            <h2>Projects</h2>
+            <table>
+                <tbody class="equal-two-cols dense-table">
+                    {projects.map(proj => (
+                        <tr>
+                            <td>{proj.title}</td>
+                            {proj.link ? (
+                                <td><a href={proj.link}>{proj.link}</a></td>
+                            ) : (
+                                <td>For details, go to <a href="/projects_certificates">Projects & Certifications</a> page...</td>
+                            )}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+
+        <section id="certifications">
+            <h2>Certifications</h2>
+            <table>
+            <tbody class="inverted-two-cols dense-table">
+                {certifications.map(cert => (
+                    <tr>
+                    <td><b>{cert.title}</b> by {cert.issuer}</td>
+                    {cert.link ? (
+                        <td><p><a href={cert.link}>Certificate</a> received on <b>{formatDate(cert.achievement_date, 'YYYY-MMM')}</b></p></td>
+                    ) : (
+                        <td>TBD</td>
+                    )}
+                    </tr>
+                ))}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+
+        <section id="honors_and_awards">
+            <h2>Honors and Awards</h2>
+            <table>
+            <tbody class="equal-two-cols dense-table">
+                {honors_and_awards.map(hna => (
+                    <tr>
+                    <td><b>{hna.title}</b></td>
+                    <td>{hna.description}</td>
+                    </tr>
+                ))}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+
+        <section id="interests">
+            <h2>Interests</h2>
+            <table>
+            <tbody class="two-cols dense-table">
+                {Object.entries(arranged_interests).map(([int_subcategory, ints]) => {
+                    const cat_ints = ints.join(", ");
+                    return (
+                        <tr>
+                        <td><b>{int_subcategory}</b></td>
+                        <td>{cat_ints}</td>
+                        </tr>
+                    );
+                })}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+
+        {resume_path && (
+            <a href={`/${resume_path}`} download class="download-link" style="width: 50vw;">Resume</a>
+        )}
+        <hr class="section-divider">
+
+    </div>
+</BaseLayout>

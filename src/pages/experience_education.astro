@@ -1,0 +1,158 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import db from '../utils/db.js';
+
+// Query data
+let basic_info = null;
+let education = [];
+let experience = [];
+
+if (db) {
+	try {
+		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
+		const user_filter = basic_info ? basic_info.id : 1;
+
+		education = db.prepare('SELECT * FROM education WHERE fk_user = ?').all(user_filter);
+		experience = db.prepare('SELECT * FROM experience WHERE fk_user = ?').all(user_filter);
+	} catch (error) {
+		console.error('Database query failed:', error.message);
+	}
+}
+
+// Sort descending by duration_start
+experience.sort((a, b) => new Date(b.duration_start) - new Date(a.duration_start));
+education.sort((a, b) => new Date(b.duration_start) - new Date(a.duration_start));
+
+const curr_date = new Date().toISOString().slice(0, 10);
+
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d)) return dateString;
+    const year = d.getUTCFullYear();
+    const month = d.toLocaleString('default', { month: 'short' });
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+// SQLite returns JSON columns as strings.
+const safeParseJSON = (str) => {
+    if (!str) return null;
+    try {
+        return JSON.parse(str);
+    } catch {
+        return null;
+    }
+};
+---
+
+<BaseLayout 
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    current_page="experience_education"
+>
+    <Fragment slot="heading">
+        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    </Fragment>
+
+    <div class="main-content">
+        <section id="experience">
+            <h2>Experience</h2>
+            <table>
+            <tbody class="detailed-two-cols">
+                {experience.map((exp, index, array) => {
+                    const parsedDesc = safeParseJSON(exp.description) || {};
+                    const parsedLinks = safeParseJSON(exp.important_links) || {};
+                    const isLast = index === array.length - 1;
+
+                    return (
+                        <>
+                            <tr>
+                                <td>
+                                    <a href={exp.company_link} class="image-link">
+                                        <img src={`/logos/${exp.company_logo}.webp`} alt={exp.company} />
+                                    </a>
+                                </td>
+                                <td>
+                                    <p>Work{exp.duration_end ? "ed" : "ing"} at <b style="font-size: large;">{exp.company}</b> at <i>{exp.location}</i> as a <b style="font-size: x-large;">{exp.title}</b> 
+                                    from <b>{formatDate(exp.duration_start)}</b>
+                                    {exp.duration_end && (
+                                        <Fragment set:html={` till <b>${formatDate(exp.duration_end)}</b>`} />
+                                    )}.</p>
+                                </td>
+                            </tr>
+                            
+                            {exp.tech_stack && (
+                                <tr>
+                                    <td>Tech Stack Used:</td>
+                                    <td><p>{exp.tech_stack}</p></td>
+                                </tr>
+                            )}
+                            
+                            <tr>
+                                <td style={!isLast ? "border-bottom: 1px solid #555;" : ""}>Highlights:</td>
+                                <td class="justify-text">
+                                    <p>
+                                        {Object.entries(parsedDesc).map(([resp_head, resp_desc]) => (
+                                            <>
+                                                &bull; <b>{resp_head}: </b> {resp_desc}
+                                                <br/>
+                                            </>
+                                        ))}
+                                        
+                                        {Object.keys(parsedLinks).length > 0 && (
+                                            Object.entries(parsedLinks).map(([title, link]) => (
+                                                <>
+                                                    &bull; <b>{title}</b>: <a href={link}>{link}</a>
+                                                    <br/>
+                                                </>
+                                            ))
+                                        )}
+                                    </p>
+                                </td>
+                            </tr>
+                        </>
+                    );
+                })}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+
+        <section id="education">
+            <h2>Education</h2>
+            <table>
+            <tbody class="detailed-two-cols">
+                {education.map((edu, index, array) => {
+                    const isPast = edu.duration_end && edu.duration_end < curr_date;
+                    const isLast = index === array.length - 1;
+
+                    return (
+                        <>
+                            <tr>
+                                <td>
+                                    <a href={edu.institution_link} class="image-link">
+                                        <img src={`/logos/${edu.institution_logo}.webp`} alt={edu.institution} />
+                                    </a>
+                                </td>
+                                <td>
+                                    <p>Stud{isPast ? "ied" : "ying"} at <b>{edu.institution}</b> located at <i>{edu.location}</i>. <b>{edu.degree}</b> in <b>{edu.major}</b>
+                                    {edu.minor && (
+                                        <Fragment set:html={` with specialization in <i>${edu.minor}</i>`} />
+                                    )} from <b>{formatDate(edu.duration_start)}</b> to 
+                                    <b>{isPast ? formatDate(edu.duration_end) : (edu.duration_end ? `${formatDate(edu.duration_end)} (Expected)` : 'Present')}</b>.<br/>
+                                    {isPast ? "Final grade" : "Grade so far"} is <b>{edu.gpa}</b>.</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style={!isLast ? "border-bottom: 1px solid #555;" : ""}>Major courses:</td>
+                                <td><p>{edu.courses}</p></td>
+                            </tr>
+                        </>
+                    );
+                })}
+            </tbody>
+            </table>
+        </section>
+        <hr class="section-divider">
+    </div>
+</BaseLayout>

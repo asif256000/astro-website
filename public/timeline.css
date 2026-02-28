@@ -1,0 +1,173 @@
+.timeline {
+  position: relative;
+  margin: 0 auto;
+}
+
+.timeline-line {
+  position: absolute;
+  left: calc(50%);
+  width: 2px;
+  background-color: #444;
+}
+
+.timeline-line.dotted {
+  border-left: 2px dotted #444;
+  background: none;
+}
+
+.year-marker {
+  position: absolute;
+  left: calc(50%);
+  transform: translate(-50%) translateY(-50%);
+  color: #444;
+  text-shadow: #111;
+  font-size: 14px;
+}
+
+.timeline-event {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  width: 42%;
+  box-sizing: border-box;
+  margin: 0 3%;
+  border-radius: 10px;
+  border: #000 solid 2px;
+  box-shadow: 0 0 5px #444;
+}
+
+.timeline-event.education {
+  left: 0;
+  background-color: rgba(150, 150, 150, 0.4);
+  text-align: left;
+}
+
+.timeline-event.experience {
+  right: 0;
+  background-color: rgba(100, 100, 100, 0.4);
+  text-align: right;
+}
+
+.timeline-event .content {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-event .content h3,
+.timeline-event .content h4,
+.timeline-event .content p {
+  margin: 2px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  max-width: 100%;
+}
+
+.timeline-event::before {
+  content: attr(data-start);
+  position: absolute;
+  top: 5px;
+  color: #444;
+  font-size: 12px;
+}
+
+.timeline-event::after {
+  content: attr(data-end);
+  position: absolute;
+  bottom: 5px;
+  color: #444;
+  font-size: 12px;
+}
+
+.timeline-event.education::before,
+.timeline-event.education::after {
+  right: 5px; /* Position on the right inside the box */
+  left: auto; /* Ensure left is reset */
+  text-align: right; /* Right-align for education */
+}
+
+.timeline-event.experience::before,
+.timeline-event.experience::after {
+  left: 5px; /* Position on the left inside the box */
+  right: auto; /* Ensure right is reset */
+  text-align: left; /* Left-align for experiences */
+}
+
+.timeline-heading {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  text-align: center;
+}
+
+.timeline-heading h3 {
+  display: inline-block;
+  padding: 10px 20px;
+  border: 2px solid black;
+  background-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px #444;
+  border-radius: 10px;
+  margin: 0; /* Remove default margin */
+}
+
+.left-heading {
+  left: 0;
+}
+
+.right-heading {
+  right: 0;
+}
+
+.detail-box {
+  display: none; /* Ensures detail box is hidden by default */
+  position: absolute;
+  background-color: #ddd;
+  color: #555;
+  border: 1px solid #666;
+  padding: 10px;
+  width: max-content; /* Set width to automatically adjust to content */
+  max-width: 50vw;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(128, 128, 128, 0.4);
+  left: 100%;
+  top: 0;
+}
+
+.timeline-logo-link {
+  flex: 0 0 10vw;
+  max-width: 10vw;
+  max-height: 10vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.timeline-event:hover .detail-box {
+  display: flex; /* Shows the detail box when event box is hovered */
+  flex-direction: row;
+}
+
+.timeline-logo-link .logo {
+  max-width: 100%;
+  max-height: 100%;
+  height: auto; /* Maintains aspect ratio */
+  object-fit: contain; /* Ensures image fits the height of the content */
+}
+
+.detail-box .details {
+  flex: 1 1 auto; /* Take up remaining space */
+  padding: 0 10px;
+}
+
+.timeline-event.education:hover .detail-box {
+  flex-direction: row; /* Logo to the left for education */
+}
+
+.timeline-event.experience:hover .detail-box {
+  flex-direction: row-reverse; /* Logo to the right for experience */
+}
