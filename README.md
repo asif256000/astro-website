@@ -1,83 +1,52 @@
 # Static Astro Portfolio
 
-This project is a high-performance, statically generated portfolio website built with the **Astro** framework. It uses a local SQLite database (`profile.db`) as its data source to compile HTML during the build process, resulting in an incredibly fast and SEO-friendly static site.
+This project is a high-performance, statically generated portfolio website built with the **Astro** framework. 
 
-This project was originally converted from a dynamic FastAPI application.
+It uses a local SQLite database (`profile.db`) as its data source to compile HTML during the build process, resulting in an incredibly fast and SEO-friendly static site. This project was originally a dynamic FastAPI application but was converted to Astro for static deployment.
 
 ## 🚀 Features
-
-- **Blazing Fast**: Generates pure HTML, CSS, and JS components ahead of time. No server-side processing is required on request.
+- **Blazing Fast**: Generates pure HTML, CSS, and JS components ahead of time.
 - **SQLite Data Source**: Reads all content from `profile.db` directly into Astro components using `better-sqlite3`.
-- **Zero-JavaScript Hydration**: By default, Astro components ship with zero client-side JavaScript, ensuring instantaneous load times.
+- **Zero-JavaScript Hydration**: Astro components ship with zero client-side JavaScript by default.
 - **Built-in Dark Mode**: A lightweight, native JS dark mode implementation saved to `localStorage`.
-- **Responsive Layouts**: Designed to be responsive with a single `BaseLayout` controlling the core shell.
-- **Continuous Integration**: Includes a GitHub Action to automatically test the build on every push to the `main` branch.
-
-## 📁 Project Structure
-
-```text
-├── .github/workflows/
-│   └── build.yml       # GitHub Actions workflow for CI
-├── public/             # Static assets (CSS, JS logic, images)
-├── src/
-│   ├── layouts/        # Shared layouts (e.g., BaseLayout)
-│   └── pages/          # Astro pages corresponding to site routes
-├── profile.db          # The SQLite database (MUST be present at root)
-├── astro.config.mjs    # Astro configuration
-└── package.json        # Dependencies and scripts
-```
+- **Continuous Integration**: Includes a GitHub Action to automatically build the site on every push to the `main` branch.
 
 ## 🛠️ Local Development
+1. **Install dependencies**: `npm install`
+2. **Start the dev server**: `npm run dev`
+3. **Build the static site**: `npm run build`
 
-### Prerequisites
+*Note: The `profile.db` SQLite database file must be present at the root of the project for the dev server or build to succeed.*
 
-1. **Node.js**: Ensure you are using a modern version of Node.js (v20+ recommended).
-2. **SQLite Database**: Ensure that `profile.db` exists at the root of the project. The build will fail without it.
+## 🗄️ Managing the Database
+The project includes a Node.js helper script (`db_helper.js`) to assist with Create, Read, Update, and Delete (CRUD) operations on the `profile.db` SQLite database without needing to write raw SQL.
 
-### Setup
+**Usage Example:**
+```javascript
+import { find, insertOne, updateOne, deleteOne } from './db_helper.js';
 
-Install the required dependencies:
+// Read all projects
+const allProjects = find('projects');
+console.log(allProjects);
 
-```bash
-npm install
+// Read a specific project
+const specificProject = find('projects', { id: 1 });
+
+// Create a new project
+insertOne('projects', { 
+    title: 'New Project', 
+    description: 'A cool new project', 
+    link: 'https://example.com', 
+    fk_user: 1 
+});
+
+// Update a project
+updateOne('projects', { title: 'Updated Project Name' }, { id: 1 });
+
+// Delete a project
+deleteOne('projects', { id: 2 });
 ```
-
-### Running the Dev Server
-
-To see your changes in real-time, start the Astro dev server:
-
+You can run your custom data-fetching or modification scripts using node:
 ```bash
-npm run dev
+node your_script.js
 ```
-
-Since Astro reads the database live, any changes applied to `profile.db` will instantly be reflected in your local environment.
-
-### Building for Production
-
-Compile the site down to static files (HTML/CSS):
-
-```bash
-npm run build
-```
-
-This will output the final static files to the `dist/` directory. You can preview the built site locally using:
-
-```bash
-npm run preview
-```
-
-## ☁️ Cloudflare Pages Deployment
-
-This project is perfectly optimized for serving on Cloudflare's global edge network as a static site. No database hosting is required, as the site is completely generated during the build step.
-
-To deploy:
-
-1. Push your latest code changes and the specific `profile.db` you want to use to your GitHub repository.
-2. Log into the **Cloudflare Dashboard**.
-3. Under **Workers & Pages**, click **Create application**, then the **Pages** tab.
-4. Click **Connect to Git** and authorize your repository.
-5. In the build settings, use the following configuration:
-   - **Framework Preset**: `Astro`
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-6. Click **Save and Deploy**. Cloudflare will run the build command, execute the SQLite queries at build-engine runtime, and host the output `dist/` files on their edge servers!
