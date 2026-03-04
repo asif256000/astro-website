@@ -1,4 +1,4 @@
-document.addEventListener("astro:page-load", function () {
+window.onload = function () {
   var ids = ["education", "experience", "projects", "certifications"];
   ids.forEach(function (id) {
     var wrapper = document.getElementById(id);
@@ -9,7 +9,9 @@ document.addEventListener("astro:page-load", function () {
       }
     }
   });
+};
 
+document.addEventListener("DOMContentLoaded", function () {
   const allSelectedItems = document.querySelectorAll(".selected-item");
 
   // Toggle the navbar menu

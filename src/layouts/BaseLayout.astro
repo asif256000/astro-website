@@ -1,6 +1,5 @@
 ---
 import { Image } from 'astro:assets';
-import { ClientRouter } from 'astro:transitions';
 
 interface Props {
 	title: string;
@@ -27,7 +26,6 @@ const { title, current_page = 'home' } = Astro.props;
     <script src="/other-actions.js" is:inline defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Personal profile and portfolio website of Asif Iqbal. Explore my experiences, education, and latest projects.">
-    <ClientRouter />
     <slot name="head" />
 </head>
 

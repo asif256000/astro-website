@@ -1,4 +1,4 @@
-document.addEventListener("astro:page-load", function () {
+document.addEventListener("DOMContentLoaded", function () {
   // Update the timeline event positions
   const timelineEvents = document.querySelectorAll(".timeline-event");
   const timelineContainer = document.querySelector(".timeline");

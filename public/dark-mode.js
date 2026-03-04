@@ -1,6 +1,5 @@
-document.addEventListener("astro:page-load", function () {
-  let darkMode = localStorage.getItem("darkMode");
-  const systemDarkMode =
+let darkMode = localStorage.getItem("darkMode");
+const systemDarkMode =
   window.matchMedia &&
   window.matchMedia("(prefers-color-scheme: dark)").matches;
 
@@ -53,4 +52,3 @@ if (darkMode === "enabled") {
       enableDarkMode();
     }
   });
-});

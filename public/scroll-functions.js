@@ -1,6 +1,5 @@
 var timeout;
-
-function handleScroll() {
+window.onscroll = function () {
   clearTimeout(timeout);
   var darkModeToggle = document.querySelector(".dark-mode-toggle");
   var scrollToTopButton = document.querySelector("#scroll-to-top");
@@ -18,8 +17,4 @@ function handleScroll() {
     scrollToTopButton.style.opacity = "0.1";
     scrollToBottomButton.style.opacity = "0.1";
   }, 1000);
-}
-
-document.addEventListener("astro:page-load", function () {
-  window.addEventListener("scroll", handleScroll);
-});
+};
