@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("astro:page-load", function () {
   // Update the timeline event positions
   const timelineEvents = document.querySelectorAll(".timeline-event");
   const timelineContainer = document.querySelector(".timeline");
@@ -69,21 +69,12 @@ document.addEventListener("DOMContentLoaded", function () {
     event.style.top = `${topPosition}px`;
     event.style.height = `${height}px`;
 
-    if (monthsDuration < 4 || (window.innerWidth <= 768 && monthsDuration < 12)) {
-      const contentDiv = event.querySelector(".content");
-      if (contentDiv) {
-        // Find everything except the main title (h3) and hide it
-        Array.from(contentDiv.children).forEach(child => {
-          if (child.tagName.toLowerCase() !== 'h3') {
-            child.style.display = "none";
-          }
-        });
-      }
-      
-      // Optionally hide the date tags before/after the box for very small durations too
-      if (monthsDuration < 4) {
-        event.setAttribute("data-end", "");
-      }
+    // Assign classes based on duration for responsive CSS
+    event.classList.remove("duration-tiny", "duration-short");
+    if (monthsDuration < 6) {
+      event.classList.add("duration-tiny");
+    } else if (monthsDuration < 12) {
+      event.classList.add("duration-short");
     }
   }
 

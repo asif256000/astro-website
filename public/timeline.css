@@ -180,3 +180,27 @@
 .timeline-event.experience:hover .detail-box {
   flex-direction: row-reverse; /* Logo to the right for experience */
 }
+
+/* -- DURATION RESPONSIVENESS -- */
+
+/* < 6 MONTHS: Hide everything except title (h3) and start date universally */
+.timeline-event.duration-tiny .content *:not(h3) {
+  display: none !important;
+}
+.timeline-event.duration-tiny::after {
+  content: "" !important;
+  display: none !important;
+}
+
+/* < 12 MONTHS (Desktop >= 768px): Hide everything except title (h3) and organization name (p). Start and End date still visible. */
+.timeline-event.duration-short .content *:not(h3):not(p) {
+  display: none !important;
+}
+
+/* < 12 MONTHS (Mobile < 768px): Hide organization name (p) as well, leaving ONLY title (h3). Start and End date still visible. */
+@media (max-width: 768px) {
+  .timeline-event.duration-short .content *:not(h3) {
+    display: none !important;
+  }
+}
+
