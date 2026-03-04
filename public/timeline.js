@@ -69,12 +69,21 @@ document.addEventListener("DOMContentLoaded", function () {
     event.style.top = `${topPosition}px`;
     event.style.height = `${height}px`;
 
-    if (monthsDuration < 4) {
-      const pTag = event.querySelector(".content p");
-      if (pTag) {
-        pTag.style.display = "none";
+    if (monthsDuration < 4 || (window.innerWidth <= 768 && monthsDuration < 12)) {
+      const contentDiv = event.querySelector(".content");
+      if (contentDiv) {
+        // Find everything except the main title (h3) and hide it
+        Array.from(contentDiv.children).forEach(child => {
+          if (child.tagName.toLowerCase() !== 'h3') {
+            child.style.display = "none";
+          }
+        });
       }
-      event.setAttribute("data-end", "");
+      
+      // Optionally hide the date tags before/after the box for very small durations too
+      if (monthsDuration < 4) {
+        event.setAttribute("data-end", "");
+      }
     }
   }
 
