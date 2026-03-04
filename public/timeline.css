@@ -133,8 +133,17 @@
   max-width: 50vw;
   z-index: 10;
   box-shadow: 0 4px 8px rgba(128, 128, 128, 0.4);
-  left: 100%;
   top: 0;
+}
+
+.timeline-event.education .detail-box {
+  left: 100%;
+  right: auto;
+}
+
+.timeline-event.experience .detail-box {
+  right: 100%;
+  left: auto;
 }
 
 .timeline-logo-link {

@@ -78,24 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function addHoverEffect(event) {
-    event.addEventListener("mouseenter", function () {
-      const detailBox = this.querySelector(".detail-box");
-      if (detailBox) {
-        const boxRect = detailBox.getBoundingClientRect();
-        if (boxRect.right > window.innerWidth) {
-          detailBox.style.left = "auto";
-          detailBox.style.right = "100%"; // Flip to the left
-        } else if (boxRect.left < 0) {
-          detailBox.style.right = "auto";
-          detailBox.style.left = "100%"; // Flip to the right if it goes out of the left side of the viewport
-        }
-      }
-    });
-  }
-
   timelineEvents.forEach(calculatePosition);
-  timelineEvents.forEach(addHoverEffect);
 
   // Set timeline end to current date, not beyond it
   endYear = currentYear;

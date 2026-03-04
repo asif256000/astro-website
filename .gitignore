@@ -3,7 +3,7 @@ dist/
 .astro/
 .DS_Store
 .env
-
+profile.db-*
 *.log
 
 AGENTS.md
