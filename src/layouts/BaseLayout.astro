@@ -20,8 +20,8 @@ const { title, current_page = 'home' } = Astro.props;
     <link href="/responsive.css" rel="stylesheet">
     <link href="/table-styles.css" rel="stylesheet">
     <script src="/dark-mode.js" defer></script>
-    <script src="/scroll-functions.js" is:inline></script>
-    <script src="/other-actions.js" is:inline></script>
+    <script src="/scroll-functions.js" is:inline defer></script>
+    <script src="/other-actions.js" is:inline defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <slot name="head" />
 </head>
@@ -43,7 +43,7 @@ const { title, current_page = 'home' } = Astro.props;
             <h1>
                 <div style="display: inline-block; vertical-align: middle;">
                     <a href="/">
-                        <img src="/logos/profile_logo.webp" alt="Logo" style="width: 50px;" fetchpriority="high">
+                        <img src="/logos/profile_logo.webp" alt="Logo" width="50" height="50" style="width: 50px; height: auto;" fetchpriority="high">
                     </a>
                 </div>
                 <div style="display: inline-block; vertical-align: middle;">
@@ -97,19 +97,19 @@ const { title, current_page = 'home' } = Astro.props;
         <p>My Profile</p>
         <div class="social-media-links">
             <a href="https://www.linkedin.com/in/asif-iqbal-r" target="_blank">
-                <img src="/logos/linkedin.webp" alt="LinkedIn" class="logo" fetchpriority="low">
+                <img src="/logos/linkedin.webp" alt="LinkedIn" width="32" height="32" class="logo" fetchpriority="low">
             </a>
             &nbsp;&nbsp;&nbsp;
             <a href="https://github.com/asif256000" target="_blank">
-                <img src="/logos/github.webp" alt="GitHub" class="logo" fetchpriority="low">
+                <img src="/logos/github.webp" alt="GitHub" width="32" height="32" class="logo" fetchpriority="low">
             </a>
             &nbsp;&nbsp;&nbsp;
             <a href="https://scholar.google.com/citations?hl=en&user=EImUgsAAAAAJ" target="_blank">
-                <img src="/logos/gscholar.webp" alt="GoogleScholar" class="logo" fetchpriority="low">
+                <img src="/logos/gscholar.webp" alt="GoogleScholar" width="32" height="32" class="logo" fetchpriority="low">
             </a>
             &nbsp;&nbsp;&nbsp;
             <a href="https://orcid.org/0009-0008-8317-8133" target="_blank">
-                <img src="/logos/orcid.webp" alt="ORCID" class="logo" fetchpriority="low">
+                <img src="/logos/orcid.webp" alt="ORCID" width="32" height="32" class="logo" fetchpriority="low">
             </a>
         </div>
         <div>
