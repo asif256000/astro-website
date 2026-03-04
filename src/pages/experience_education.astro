@@ -92,7 +92,7 @@ const safeParseJSON = (str) => {
                                 <td style={!isLast ? "border-bottom: 1px solid #555;" : ""}>Highlights:</td>
                                 <td class="justify-text">
                                     <p>
-                                        {Object.entries(parsedDesc).map(([resp_head, resp_desc]) => (
+                                        {(Array.isArray(parsedDesc) ? parsedDesc : Object.entries(parsedDesc)).map(([resp_head, resp_desc]) => (
                                             <>
                                                 &bull; <b>{resp_head}: </b> {resp_desc}
                                                 <br/>
