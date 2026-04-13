@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import db from '../utils/db.js';
+import Card from '../components/Card.astro';
 
 // Query data
 let basic_info = null;
@@ -32,52 +33,71 @@ const formatDate = (dateString, format = 'YYYY-MM-DD') => {
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Projects & Certifications` : "Projects & Certifications"}
     current_page="projects_certificates"
 >
-    <Fragment slot="heading">
-        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
-    </Fragment>
+    <!-- Heading handled by Navbar -->
 
-    <div class="main-content">
+    <div class="page-content">
         <section id="projects">
-            <h2>Projects</h2>
-            <table>
-            <tbody class="three-cols">
+            <h2 class="section-title">Projects</h2>
+            <div class="card-grid">
                 {projects.map(proj => (
-                    <tr>
-                    <td>{proj.title}</td>
-                    <td><p class="justify-text">{proj.description}</p></td>
-                    {proj.link ? (
-                        <td>Link: <a href={proj.link}>{proj.link}</a></td>
-                    ) : (
-                        <td></td>
-                    )}
-                    </tr>
+                    <Card 
+                        title={proj.title} 
+                        link={proj.link}
+                    >
+                        <p>{proj.description}</p>
+                    </Card>
                 ))}
-            </tbody>
-            </table>
+            </div>
         </section>
-        <hr class="section-divider">
 
         <section id="certifications">
-            <h2>Certifications</h2>
-            <table>
-            <tbody class="three-cols">
+            <h2 class="section-title">Certifications</h2>
+            <div class="card-grid">
                 {certifications.map(cert => (
-                    <tr>
-                    <td><b>{cert.title}</b> {cert.link ? " issued by " : " at "} {cert.issuer}</td>
-                    <td><p class="justify-text">{cert.description}</p></td>
-                    {cert.link ? (
-                        <td><p><a href={cert.link}>Certificate</a> earned on <b>{formatDate(cert.achievement_date)}</b></p></td>
-                    ) : (
-                        <td></td>
-                    )}
-                    </tr>
+                    <Card 
+                        title={cert.title} 
+                        subtitle={`Issued by ${cert.issuer}`}
+                        date={cert.link ? formatDate(cert.achievement_date) : undefined}
+                        link={cert.link}
+                    >
+                        <p>{cert.description}</p>
+                    </Card>
                 ))}
-            </tbody>
-            </table>
+            </div>
         </section>
-        <hr class="section-divider">
     </div>
 </BaseLayout>
+
+<style>
+    .page-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4rem;
+    }
+
+    .section-title {
+        font-size: 2.25rem;
+        margin-bottom: 2rem;
+        font-weight: 800;
+        display: inline-block;
+        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .card-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    @media (min-width: 768px) {
+        .card-grid {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+    }
+</style>
