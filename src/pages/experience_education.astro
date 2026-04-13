@@ -48,112 +48,231 @@ const safeParseJSON = (str) => {
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Experience & Education` : "Experience & Education"}
     current_page="experience_education"
 >
-    <Fragment slot="heading">
-        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
-    </Fragment>
+    <!-- We no longer need the explicit heading slot as it's handled in Navbar now! -->
 
-    <div class="main-content">
+    <div class="page-content">
         <section id="experience">
-            <h2>Experience</h2>
-            <table>
-            <tbody class="detailed-two-cols">
-                {experience.map((exp, index, array) => {
+            <h2 class="section-title">Experience</h2>
+            <div class="list-container">
+                {experience.map(exp => {
                     const parsedDesc = safeParseJSON(exp.description) || {};
                     const parsedLinks = safeParseJSON(exp.important_links) || {};
-                    const isLast = index === array.length - 1;
 
                     return (
-                        <>
-                            <tr>
-                                <td>
-                                    <a href={exp.company_link} class="image-link">
-                                        <Image src={`/logos/${exp.company_logo}.webp`} alt={exp.company} width="100" height="100" />
+                        <div class="detail-card glass-panel">
+                            <div class="card-header-flex">
+                                <div class="logo-box">
+                                    <a href={exp.company_link} class="image-link" target="_blank">
+                                        <Image src={`/logos/${exp.company_logo}.webp`} alt={exp.company} width="80" height="80" />
                                     </a>
-                                </td>
-                                <td>
-                                    <p>Work{exp.duration_end ? "ed" : "ing"} at <b style="font-size: large;">{exp.company}</b> at <i>{exp.location}</i> as a <b style="font-size: x-large;">{exp.title}</b> 
-                                    from <b>{formatDate(exp.duration_start)}</b>
-                                    {exp.duration_end && (
-                                        <Fragment set:html={` till <b>${formatDate(exp.duration_end)}</b>`} />
-                                    )}.</p>
-                                </td>
-                            </tr>
+                                </div>
+                                <div class="title-box">
+                                    <h3 class="role-title">{exp.title}</h3>
+                                    <h4 class="company-name">{exp.company} — {exp.location}</h4>
+                                    <span class="duration-badge">
+                                        {formatDate(exp.duration_start)} to {exp.duration_end ? formatDate(exp.duration_end) : 'Present'}
+                                    </span>
+                                </div>
+                            </div>
                             
                             {exp.tech_stack && (
-                                <tr>
-                                    <td>Tech Stack Used:</td>
-                                    <td><p>{exp.tech_stack}</p></td>
-                                </tr>
+                                <div class="tech-stack-box">
+                                    <strong>Tech Stack:</strong> <span class="tech-text">{exp.tech_stack}</span>
+                                </div>
                             )}
                             
-                            <tr>
-                                <td style={!isLast ? "border-bottom: 1px solid #555;" : ""}>Highlights:</td>
-                                <td class="justify-text">
-                                    <p>
-                                        {(Array.isArray(parsedDesc) ? parsedDesc : Object.entries(parsedDesc)).map(([resp_head, resp_desc]) => (
-                                            <>
-                                                &bull; <b>{resp_head}: </b> {resp_desc}
-                                                <br/>
-                                            </>
-                                        ))}
-                                        
-                                        {Object.keys(parsedLinks).length > 0 && (
-                                            Object.entries(parsedLinks).map(([title, link]) => (
-                                                <>
-                                                    &bull; <b>{title}</b>: <a href={link}>{link}</a>
-                                                    <br/>
-                                                </>
-                                            ))
-                                        )}
-                                    </p>
-                                </td>
-                            </tr>
-                        </>
+                            <div class="highlights-box">
+                                <strong>Highlights:</strong>
+                                <ul class="highlights-list">
+                                    {(Array.isArray(parsedDesc) ? parsedDesc : Object.entries(parsedDesc)).map(([resp_head, resp_desc]) => (
+                                        <li><b>{resp_head}:</b> {resp_desc}</li>
+                                    ))}
+                                    {Object.keys(parsedLinks).length > 0 && (
+                                        Object.entries(parsedLinks).map(([title, link]) => (
+                                            <li><b>{title}:</b> <a href={link} class="custom-link" target="_blank">{link}</a></li>
+                                        ))
+                                    )}
+                                </ul>
+                            </div>
+                        </div>
                     );
                 })}
-            </tbody>
-            </table>
+            </div>
         </section>
-        <hr class="section-divider">
 
         <section id="education">
-            <h2>Education</h2>
-            <table>
-            <tbody class="detailed-two-cols">
-                {education.map((edu, index, array) => {
+            <h2 class="section-title">Education</h2>
+            <div class="list-container">
+                {education.map(edu => {
                     const isPast = edu.duration_end && edu.duration_end < curr_date;
-                    const isLast = index === array.length - 1;
 
                     return (
-                        <>
-                            <tr>
-                                <td>
-                                    <a href={edu.institution_link} class="image-link">
-                                        <Image src={`/logos/${edu.institution_logo}.webp`} alt={edu.institution} width="100" height="100" />
+                        <div class="detail-card glass-panel">
+                            <div class="card-header-flex">
+                                <div class="logo-box">
+                                    <a href={edu.institution_link} class="image-link" target="_blank">
+                                        <Image src={`/logos/${edu.institution_logo}.webp`} alt={edu.institution} width="80" height="80" />
                                     </a>
-                                </td>
-                                <td>
-                                    <p>Stud{isPast ? "ied" : "ying"} at <b>{edu.institution}</b> located at <i>{edu.location}</i>. <b>{edu.degree}</b> in <b>{edu.major}</b>
-                                    {edu.minor && (
-                                        <Fragment set:html={` with specialization in <i>${edu.minor}</i>`} />
-                                    )} from <b>{formatDate(edu.duration_start)}</b> to 
-                                    <b>{isPast ? formatDate(edu.duration_end) : (edu.duration_end ? `${formatDate(edu.duration_end)} (Expected)` : 'Present')}</b>.<br/>
-                                    {isPast ? "Final grade" : "Grade so far"} is <b>{edu.gpa}</b>.</p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={!isLast ? "border-bottom: 1px solid #555;" : ""}>Major courses:</td>
-                                <td><p>{edu.courses}</p></td>
-                            </tr>
-                        </>
+                                </div>
+                                <div class="title-box">
+                                    <h3 class="role-title">{edu.degree} in {edu.major}</h3>
+                                    <h4 class="company-name">{edu.institution} — {edu.location}</h4>
+                                    <span class="duration-badge">
+                                        {formatDate(edu.duration_start)} to {edu.duration_end ? formatDate(edu.duration_end) : 'Present'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="highlights-box">
+                                <ul class="highlights-list" style="margin-top: 1rem;">
+                                    {edu.minor && <li><b>Specialization:</b> {edu.minor}</li>}
+                                    <li><b>{isPast ? "Final grade" : "Grade so far"}:</b> {edu.gpa}</li>
+                                    <li><b>Major courses:</b> {edu.courses}</li>
+                                </ul>
+                            </div>
+                        </div>
                     );
                 })}
-            </tbody>
-            </table>
+            </div>
         </section>
-        <hr class="section-divider">
     </div>
 </BaseLayout>
+
+<style>
+    .page-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4rem;
+    }
+
+    .section-title {
+        font-size: 2.25rem;
+        margin-bottom: 2rem;
+        font-weight: 800;
+        display: inline-block;
+        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .detail-card {
+        padding: 2rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .detail-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header-flex {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1.5rem;
+    }
+
+    @media (min-width: 600px) {
+        .card-header-flex {
+            flex-direction: row;
+            align-items: center;
+        }
+    }
+
+    .logo-box img {
+        border-radius: 8px;
+        background-color: #fff; /* In case logos have transparent backgrounds */
+        padding: 4px;
+    }
+
+    .role-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .company-name {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+    }
+
+    .duration-badge {
+        display: inline-block;
+        background-color: var(--bg-color);
+        color: var(--text-secondary);
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 9999px;
+        border: 1px solid var(--border-color);
+    }
+
+    .tech-stack-box {
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        background-color: var(--bg-color);
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--accent-color);
+    }
+
+    .tech-text {
+        font-family: 'Fira Code', monospace;
+        color: var(--accent-color);
+    }
+
+    .highlights-box strong {
+        font-size: 1.1rem;
+        display: inline-block;
+        margin-bottom: 0.75rem;
+    }
+
+    .highlights-list {
+        list-style-type: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .highlights-list li {
+        position: relative;
+        padding-left: 1.5rem;
+        line-height: 1.6;
+        color: var(--text-secondary);
+    }
+
+    .highlights-list li::before {
+        content: "▹";
+        position: absolute;
+        left: 0;
+        color: var(--accent-color);
+        font-size: 1.2rem;
+    }
+
+    .highlights-list b {
+        color: var(--text-primary);
+    }
+
+    .custom-link {
+        color: var(--accent-color);
+        text-decoration: underline;
+        text-decoration-color: transparent;
+        transition: text-decoration-color 0.2s;
+    }
+    .custom-link:hover {
+        text-decoration-color: var(--accent-color);
+    }
+</style>
