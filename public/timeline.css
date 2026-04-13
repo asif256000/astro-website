@@ -1,206 +1,182 @@
-.timeline {
-  position: relative;
-  margin: 0 auto;
-}
-
-.timeline-line {
-  position: absolute;
-  left: calc(50%);
-  width: 2px;
-  background-color: #444;
-}
-
-.timeline-line.dotted {
-  border-left: 2px dotted #444;
-  background: none;
-}
-
-.year-marker {
-  position: absolute;
-  left: calc(50%);
-  transform: translate(-50%) translateY(-50%);
-  color: #444;
-  text-shadow: #111;
-  font-size: 14px;
-}
-
-.timeline-event {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  width: 42%;
-  box-sizing: border-box;
-  margin: 0 3%;
-  border-radius: 10px;
-  border: #000 solid 2px;
-  box-shadow: 0 0 5px #444;
-}
-
-.timeline-event.education {
-  left: 0;
-  background-color: rgba(150, 150, 150, 0.4);
-  text-align: left;
-}
-
-.timeline-event.experience {
-  right: 0;
-  background-color: rgba(100, 100, 100, 0.4);
-  text-align: right;
-}
-
-.timeline-event .content {
+.timeline-container {
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  position: relative;
+  margin: 2rem 0;
+  padding: 2rem 0;
+  max-width: 1000px;
 }
 
-.timeline-event .content h3,
-.timeline-event .content h4,
-.timeline-event .content p {
-  margin: 2px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: normal;
-  max-width: 100%;
-}
-
-.timeline-event::before {
-  content: attr(data-start);
-  position: absolute;
-  top: 5px;
-  color: #444;
-  font-size: 12px;
-}
-
-.timeline-event::after {
-  content: attr(data-end);
-  position: absolute;
-  bottom: 5px;
-  color: #444;
-  font-size: 12px;
-}
-
-.timeline-event.education::before,
-.timeline-event.education::after {
-  right: 5px; /* Position on the right inside the box */
-  left: auto; /* Ensure left is reset */
-  text-align: right; /* Right-align for education */
-}
-
-.timeline-event.experience::before,
-.timeline-event.experience::after {
-  left: 5px; /* Position on the left inside the box */
-  right: auto; /* Ensure right is reset */
-  text-align: left; /* Left-align for experiences */
-}
-
-.timeline-heading {
+/* The Central/Left Line */
+.timeline-container::before {
+  content: '';
   position: absolute;
   top: 0;
-  width: 50%;
-  text-align: center;
+  bottom: 0;
+  left: 20px;
+  width: 2px;
+  background: var(--border-color);
+  border-radius: 2px;
 }
 
-.timeline-heading h3 {
-  display: inline-block;
-  padding: 10px 20px;
-  border: 2px solid black;
-  background-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 10px #444;
-  border-radius: 10px;
-  margin: 0; /* Remove default margin */
-}
-
-.left-heading {
-  left: 0;
-}
-
-.right-heading {
-  right: 0;
-}
-
-.detail-box {
-  display: none; /* Ensures detail box is hidden by default */
-  position: absolute;
-  background-color: #ddd;
-  color: #555;
-  border: 1px solid #666;
-  padding: 10px;
-  width: max-content; /* Set width to automatically adjust to content */
-  max-width: 50vw;
-  z-index: 10;
-  box-shadow: 0 4px 8px rgba(128, 128, 128, 0.4);
-  top: 0;
-}
-
-.timeline-event.education .detail-box {
-  left: 100%;
-  right: auto;
-}
-
-.timeline-event.experience .detail-box {
-  right: 100%;
-  left: auto;
-}
-
-.timeline-logo-link {
-  flex: 0 0 10vw;
-  max-width: 10vw;
-  max-height: 10vw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.timeline-event:hover .detail-box {
-  display: flex; /* Shows the detail box when event box is hovered */
-  flex-direction: row;
-}
-
-.timeline-logo-link .logo {
-  max-width: 100%;
-  max-height: 100%;
-  height: auto; /* Maintains aspect ratio */
-  object-fit: contain; /* Ensures image fits the height of the content */
-}
-
-.detail-box .details {
-  flex: 1 1 auto; /* Take up remaining space */
-  padding: 0 10px;
-}
-
-.timeline-event.education:hover .detail-box {
-  flex-direction: row; /* Logo to the left for education */
-}
-
-.timeline-event.experience:hover .detail-box {
-  flex-direction: row-reverse; /* Logo to the right for experience */
-}
-
-/* -- DURATION RESPONSIVENESS -- */
-
-/* < 6 MONTHS: Hide everything except title (h3) and start date universally */
-.timeline-event.duration-tiny .content *:not(h3) {
-  display: none !important;
-}
-.timeline-event.duration-tiny::after {
-  content: "" !important;
-  display: none !important;
-}
-
-/* < 12 MONTHS (Desktop >= 768px): Hide everything except title (h3) and organization name (p). Start and End date still visible. */
-.timeline-event.duration-short .content *:not(h3):not(p) {
-  display: none !important;
-}
-
-/* < 12 MONTHS (Mobile < 768px): Hide organization name (p) as well, leaving ONLY title (h3). Start and End date still visible. */
-@media (max-width: 768px) {
-  .timeline-event.duration-short .content *:not(h3) {
-    display: none !important;
+/* Desktop Line shifts to dead center */
+@media (min-width: 900px) {
+  .timeline-container::before {
+    left: 50%;
+    transform: translateX(-50%);
   }
 }
 
+.timeline-item {
+  position: relative;
+  margin-bottom: 2.5rem;
+  width: 100%;
+  display: flex;
+  padding-left: 50px; /* Space for the left-aligned line and dot */
+}
+
+/* Desktop: Alternating Layout */
+@media (min-width: 900px) {
+  .timeline-item {
+    width: 50%;
+    padding: 0 40px; /* Padding pushes cards away from the center line */
+  }
+  
+  .timeline-item.education {
+    justify-content: flex-end;
+    left: 0;
+    text-align: right;
+  }
+  
+  .timeline-item.experience {
+    justify-content: flex-start;
+    left: 50%;
+    text-align: left;
+  }
+}
+
+/* The node on the timeline line */
+.timeline-dot {
+  position: absolute;
+  top: 24px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  border: 4px solid var(--bg-color);
+  box-shadow: 0 0 0 2px var(--border-color);
+  z-index: 10;
+  left: 13px; /* Mathematically aligned over the left: 20px line (20px - (16/2) + 1px) */
+}
+
+@media (min-width: 900px) {
+  .timeline-item.education .timeline-dot {
+    left: auto;
+    right: -8px; /* Pulled exactly over the 50% line */
+  }
+  .timeline-item.experience .timeline-dot {
+    left: -8px; /* Pulled exactly over the 50% line */
+  }
+}
+
+.timeline-content {
+  width: 100%;
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color-glass);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.timeline-content:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border-color: var(--accent-color);
+}
+
+.timeline-date {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 99px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.timeline-title {
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.timeline-subtitle {
+  font-size: 1.1rem;
+  color: var(--accent-color);
+  font-weight: 600;
+  margin: 0 0 1.2rem 0;
+}
+
+.timeline-details {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.timeline-details strong {
+  color: var(--text-primary);
+}
+
+.timeline-logo-link {
+  display: inline-block;
+  margin-top: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-color);
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s ease;
+}
+
+.timeline-logo-link:hover {
+  transform: scale(1.05);
+}
+
+.timeline-logo-link img {
+  display: block;
+  max-width: 60px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+/* Helper flex layout for details so the logo can sit comfortably next to the text on wider cards */
+.timeline-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 600px) {
+  .timeline-body {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  .timeline-item.education .timeline-body {
+    flex-direction: row-reverse; /* Reverses the flow purely so logo sits near the middle line */
+  }
+
+  .timeline-body .timeline-logo-link {
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+}

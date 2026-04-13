@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+
+:root {
+  /* Light Theme Variables */
+  --bg-color: #fcfcfc;
+  --surface-color: #ffffff;
+  --surface-color-glass: rgba(255, 255, 255, 0.6);
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --border-color: #eaeaea;
+  --accent-color: #333333;
+  --accent-hover: #111111;
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --glass-border: rgba(0, 0, 0, 0.04);
+}
+
+body.dark-mode {
+  /* Dark Theme Variables */
+  --bg-color: #0c0c0c;
+  --surface-color: #141414;
+  --surface-color-glass: rgba(65, 65, 65, 0.75); /* Lighter grey for better logo contrast */
+  --text-primary: #f0f0f0;
+  --text-secondary: #999999;
+  --border-color: #444444; /* Also lightened slightly to match */
+  --accent-color: #dddddd;
+  --accent-hover: #ffffff;
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+code, pre {
+  font-family: 'Fira Code', monospace;
+}
+
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--surface-color-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+/* Responsive dynamic VW constraints */
+#wrapper {
+  max-width: 90vw; /* Keeps the whole site constrained dynamically to the viewport regardless of device */
+  margin: 0 auto;
+  padding: 2rem 0; /* Fallback to consistent rem for top/bottom breathing */
+  min-height: 80vh;
+}
+
+@media (min-width: 1400px) {
+  #wrapper {
+    max-width: 1280px; /* Lock it in securely on huge 4k or massive ultrawide monitors */
+  }
+}
+
+@media (min-width: 768px) {
+  #wrapper {
+    padding: 2rem;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: var(--border-color);
+  margin: 2rem 0;
+}
