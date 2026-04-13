@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import db from '../utils/db.js';
+import Card from '../components/Card.astro';
 
 // Query data
 let basic_info = null;
@@ -33,45 +34,66 @@ const arranged_interests = arrangeInterests(interests);
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Awards & Interests` : "Awards & Interests"}
     current_page="awards_interests"
 >
-    <Fragment slot="heading">
-        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
-    </Fragment>
+    <!-- Heading handled by Navbar -->
 
-    <div class="main-content">
+    <div class="page-content">
         <section id="honors_and_awards">
-            <h2>Honors and Awards</h2>
-            <table>
-            <tbody class="two-cols">
+            <h2 class="section-title">Honors and Awards</h2>
+            <div class="card-grid">
                 {honors_and_awards.map(hna => (
-                    <tr>
-                    <td><b>{hna.title}</b></td>
-                    <td>{hna.description}</td>
-                    </tr>
+                    <Card title={hna.title}>
+                        <p>{hna.description}</p>
+                    </Card>
                 ))}
-            </tbody>
-            </table>
+            </div>
         </section>
-        <hr class="section-divider">
 
         <section id="interests">
-            <h2>Interests</h2>
-            <table>
-            <tbody class="two-cols">
+            <h2 class="section-title">Interests</h2>
+            <div class="card-grid">
                 {Object.entries(arranged_interests).map(([int_subcategory, ints]) => {
                     const cat_ints = ints.join(", ");
                     return (
-                        <tr>
-                        <td><b>{int_subcategory}</b></td>
-                        <td>{cat_ints}</td>
-                        </tr>
+                        <Card title={int_subcategory}>
+                            <p>{cat_ints}</p>
+                        </Card>
                     );
                 })}
-            </tbody>
-            </table>
+            </div>
         </section>
-        <hr class="section-divider">
     </div>
 </BaseLayout>
+
+<style>
+    .page-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4rem;
+    }
+
+    .section-title {
+        font-size: 2.25rem;
+        margin-bottom: 2rem;
+        font-weight: 800;
+        display: inline-block;
+        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .card-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    @media (min-width: 768px) {
+        .card-grid {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+    }
+</style>
