@@ -2,6 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
 import db from '../utils/db.js';
+import Card from '../components/Card.astro';
+import SkillSection from '../components/SkillSection.astro';
 
 // Query data
 let basic_info = null;
@@ -70,10 +72,16 @@ const formatDate = (dateString, format = 'YYYY-MM') => {
 
 const curr_date = new Date().toISOString().slice(0, 7);
 const resume_path = resume.length > 0 ? resume[0].file_path : '';
+
+// Merge and sort timeline events descending by date
+const timeline_events = [
+    ...education.map(e => ({ ...e, event_type: 'education', sort_date: new Date(e.duration_start).getTime() })),
+    ...experience.map(e => ({ ...e, event_type: 'experience', sort_date: new Date(e.duration_start).getTime() }))
+].sort((a, b) => b.sort_date - a.sort_date);
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Overview` : "Overview"}
     current_page="overview"
 >
     <!-- Extra head elements -->
@@ -82,185 +90,177 @@ const resume_path = resume.length > 0 ? resume[0].file_path : '';
     </Fragment>
 
     <Fragment slot="scripts">
-        <script src="/timeline.js" is:inline></script>
+        <!-- timeline.js dependency removed for native CSS timeline upgrade -->
     </Fragment>
 
-    <Fragment slot="heading">
-        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
-    </Fragment>
-
-    <div class="main-content">
-        <section id="intro">
-            <p style="text-align: justify;">Hi, I am {basic_info?.name}, currently residing in {basic_info?.location}.
+    <div class="page-content">
+        <section id="intro" class="glass-panel" style="padding: 2rem;">
+            <p style="font-size: 1.1rem; line-height: 1.6;">Hi, I am <strong>{basic_info?.name}</strong>, currently residing in {basic_info?.location}.
             <br><br>
             You can reach me at <a href={`mailto:${basic_info?.email}`}>{basic_info?.email}</a> or <a href={`tel:${basic_info?.phone}`}>{basic_info?.phone}</a> ,
             or check out my <a href={basic_info?.linkedin}>LinkedIn</a> or <a href={basic_info?.github}>GitHub</a> profiles.</p>
         </section>
-        <hr class="section-divider">
 
         <section id="timeline">
-        <h2>My Timeline</h2>
-        <p style="font-size: small; margin: 15px;">* Hover/Click for details</p>
-            <div class="timeline">
-                <div class="timeline-heading left-heading"><h3>Education</h3></div>
-                <div class="timeline-heading right-heading"><h3>Experiences</h3></div>
-
-                {education.map(edu => (
-                    <div class="timeline-event education" 
-                         data-start={formatDate(edu.duration_start, 'YYYY-MM')} 
-                         data-end={edu.duration_end ? formatDate(edu.duration_end, 'YYYY-MM') : curr_date}>
-                        <div class="content">
-                            <h3>{edu.degree}</h3>
-                            <h4>{edu.major}</h4>
-                            <p>{edu.institution}</p>
-                        </div>
-                        <div class="detail-box">
-                            <a href={edu.institution_link} class="timeline-logo-link">
-                                <Image src={`/logos/${edu.institution_logo}.webp`} alt={edu.institution} width="50" height="50" class="logo" fetchpriority="low" />
-                            </a>
-                            <div class="details">
-                                <strong>Degree:</strong> {edu.degree}<br>
-                                <strong>Field:</strong> {edu.major}<br>
-                                <strong>Institution:</strong> {edu.institution}<br>
-                                <strong>Location:</strong> {edu.location}<br>
-                                <strong>Duration:</strong> {formatDate(edu.duration_start, 'YYYY-MM')} to {edu.duration_end ? formatDate(edu.duration_end, 'YYYY-MM') : 'Present'}<br>
-                                <strong>{(!edu.duration_end || new Date(edu.duration_end) > new Date()) ? "Grade so far" : "Final grade"}:</strong> {edu.gpa}<br>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-
-                {experience.map(exp => (
-                    <div class="timeline-event experience" 
-                         data-start={formatDate(exp.duration_start, 'YYYY-MM')} 
-                         data-end={exp.duration_end ? formatDate(exp.duration_end, 'YYYY-MM') : curr_date}>
-                        <div class="content">
-                            <h3>{exp.title}</h3>
-                            <p>{exp.company}</p>
-                        </div>
-                        <div class="detail-box">
-                            <a href={exp.company_link} class="timeline-logo-link">
-                                    <Image src={`/logos/${exp.company_logo}.webp`} alt={exp.company} width="50" height="50" class="logo" fetchpriority="low" />
-                            </a>
-                            <div class="details">
-                                <strong>Title:</strong> {exp.title}<br>
-                                <strong>Organization:</strong> {exp.company}<br>
-                                <strong>Location:</strong> {exp.location}<br>
-                                <strong>Duration:</strong> {formatDate(exp.duration_start, 'YYYY-MM')} to {exp.duration_end ? formatDate(exp.duration_end, 'YYYY-MM') : 'Present'}
-                                {exp.tech_stack && (
-                                    <><br><strong>Tech stack used:</strong> {exp.tech_stack}</>
+            <h2 class="section-title">My Timeline</h2>
+            
+            <div class="timeline-container">
+                {timeline_events.map(event => (
+                    <div class={`timeline-item ${event.event_type}`}>
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-date">
+                                {formatDate(event.duration_start, 'YYYY-MM')} &mdash; {event.duration_end ? formatDate(event.duration_end, 'YYYY-MM') : 'Present'}
+                            </span>
+                            
+                            <h3 class="timeline-title">
+                                {event.event_type === 'education' ? event.degree : event.title}
+                            </h3>
+                            <p class="timeline-subtitle">
+                                {event.event_type === 'education' ? event.institution : event.company}
+                                {event.event_type === 'education' && event.major ? ` • ${event.major}` : ''}
+                            </p>
+                            
+                            <div class="timeline-body">
+                                <div class="timeline-details">
+                                    <p><strong>Location:</strong> {event.location}</p>
+                                    
+                                    {event.event_type === 'education' ? (
+                                        <p><strong>{(!event.duration_end || new Date(event.duration_end) > new Date()) ? "Grade so far" : "Final grade"}:</strong> {event.gpa}</p>
+                                    ) : (
+                                        event.tech_stack && <p style="margin-top: 0.5rem;"><strong>Tech stack:</strong> {event.tech_stack}</p>
+                                    )}
+                                </div>
+                                
+                                {((event.event_type === 'education' && event.institution_logo) || (event.event_type === 'experience' && event.company_logo)) && (
+                                    <a href={event.event_type === 'education' ? event.institution_link : event.company_link} class="timeline-logo-link" target="_blank" rel="noopener">
+                                        <Image 
+                                            src={`/logos/${event.event_type === 'education' ? event.institution_logo : event.company_logo}.webp`} 
+                                            alt={event.event_type === 'education' ? event.institution : event.company} 
+                                            width="80" 
+                                            height="80" 
+                                            fetchpriority="low" 
+                                            loading="lazy" 
+                                        />
+                                    </a>
                                 )}
                             </div>
                         </div>
                     </div>
                 ))}
-                
             </div>
         </section>
-        <hr class="section-divider">
 
         <section id="skills">
-            <h2>Proficient Skills</h2>
-            <table>
-            <tbody class="two-cols dense-table">
-                {Object.entries(arranged_skills).map(([skill_category, all_skills]) => {
-                    const adv_skills = (all_skills["Advanced"] || []).join(", ");
-                    const int_skills = (all_skills["Intermediate"] || []).join(", ");
-
-                    return (
-                        <tr>
-                            <td><b>{skill_category}</b></td>
-                            <td>
-                                <p style="margin: 5px;">
-                                    <span style="opacity: 1;">{adv_skills}</span>
-                                    {int_skills && (
-                                        <span style="opacity: 0.6;"> | {int_skills}</span>
-                                    )}
-                                </p>
-                            </td>
-                        </tr>
-                    );
-                })}
-            </tbody>
-            </table>
+            <h2 class="section-title">Proficient Skills</h2>
+            <SkillSection skillsDictionary={arranged_skills} />
         </section>
-        <hr class="section-divider">
 
         <section id="projects">
-            <h2>Projects</h2>
-            <table>
-                <tbody class="equal-two-cols dense-table">
-                    {projects.map(proj => (
-                        <tr>
-                            <td>{proj.title}</td>
-                            {proj.link ? (
-                                <td><a href={proj.link}>{proj.link}</a></td>
-                            ) : (
-                                <td>For details, go to <a href="/projects_certificates">Projects & Certifications</a> page...</td>
-                            )}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <h2 class="section-title">Projects</h2>
+            <div class="grid-list">
+                {projects.map(proj => (
+                    <Card title={proj.title} link={proj.link}>
+                        {!proj.link && "For details, go to Projects & Certifications page..."}
+                    </Card>
+                ))}
+            </div>
         </section>
-        <hr class="section-divider">
 
         <section id="certifications">
-            <h2>Certifications</h2>
-            <table>
-            <tbody class="inverted-two-cols dense-table">
+            <h2 class="section-title">Certifications</h2>
+            <div class="grid-list">
                 {certifications.map(cert => (
-                    <tr>
-                    <td><b>{cert.title}</b> by {cert.issuer}</td>
-                    {cert.link ? (
-                        <td><p><a href={cert.link}>Certificate</a> received on <b>{formatDate(cert.achievement_date, 'YYYY-MMM')}</b></p></td>
-                    ) : (
-                        <td>TBD</td>
-                    )}
-                    </tr>
+                    <Card title={cert.title} subtitle={`Issued by ${cert.issuer}`}>
+                        {cert.link ? (
+                            <p><a href={cert.link}>View Certificate</a> received on <b>{formatDate(cert.achievement_date, 'YYYY-MMM')}</b></p>
+                        ) : (
+                            <p>TBD</p>
+                        )}
+                    </Card>
                 ))}
-            </tbody>
-            </table>
+            </div>
         </section>
-        <hr class="section-divider">
 
         <section id="honors_and_awards">
-            <h2>Honors and Awards</h2>
-            <table>
-            <tbody class="equal-two-cols dense-table">
+            <h2 class="section-title">Honors and Awards</h2>
+            <div class="grid-list">
                 {honors_and_awards.map(hna => (
-                    <tr>
-                    <td><b>{hna.title}</b></td>
-                    <td>{hna.description}</td>
-                    </tr>
+                    <Card title={hna.title}>
+                        <p>{hna.description}</p>
+                    </Card>
                 ))}
-            </tbody>
-            </table>
+            </div>
         </section>
-        <hr class="section-divider">
 
         <section id="interests">
-            <h2>Interests</h2>
-            <table>
-            <tbody class="two-cols dense-table">
-                {Object.entries(arranged_interests).map(([int_subcategory, ints]) => {
-                    const cat_ints = ints.join(", ");
-                    return (
-                        <tr>
-                        <td><b>{int_subcategory}</b></td>
-                        <td>{cat_ints}</td>
-                        </tr>
-                    );
-                })}
-            </tbody>
-            </table>
+            <h2 class="section-title">Interests</h2>
+            <div class="grid-list">
+                {Object.entries(arranged_interests).map(([int_subcategory, ints]) => (
+                    <Card title={int_subcategory}>
+                        <p>{ints.join(", ")}</p>
+                    </Card>
+                ))}
+            </div>
         </section>
-        <hr class="section-divider">
 
         {resume_path && (
-            <a href={`/${resume_path}`} download class="download-link" style="width: 50vw;">Resume</a>
+            <section style="display: flex; justify-content: center; margin-top: 2rem;">
+                <a href={`/${resume_path}`} download class="btn primary">
+                    <span class="icon">⬇</span> Download Full Resume
+                </a>
+            </section>
         )}
-        <hr class="section-divider">
-
     </div>
 </BaseLayout>
+
+<style>
+    .page-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4rem;
+    }
+
+    .section-title {
+        font-size: 2.25rem;
+        margin-bottom: 2rem;
+        font-weight: 800;
+        display: inline-block;
+        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .grid-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .grid-list {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+        padding: 0.8rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        background-color: var(--accent-color);
+        color: #fff;
+    }
+
+    .btn:hover {
+        background-color: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+</style>
