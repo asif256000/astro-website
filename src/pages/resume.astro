@@ -20,29 +20,88 @@ const resume_path = resume.length > 0 ? resume[0].file_path : '';
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Resume` : "Resume"}
     current_page="resume"
 >
-    <Fragment slot="heading">
-        {basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
-    </Fragment>
+    <!-- Heading handled by Navbar -->
 
-    <div class="main-content">
-        <section id="resume">
-            <h2>Resume</h2>
-            <p>If you are looking for a resume for a specific role, please let me know via email or phone. I can tailor 
-            the resume for the role with my existing skills and experience, mentioning the relevant technologies and will send it to you.</p>
+    <div class="page-content">
+        <section id="resume" class="glass-panel" style="padding: 2rem;">
+            <div class="resume-header">
+                <h2 class="section-title" style="margin-bottom: 1rem;">Resume</h2>
+                <p class="resume-desc">
+                    If you are looking for a resume for a specific role, please let me know via email or phone. I can tailor 
+                    the resume for the role with my existing skills and experience, mentioning the relevant technologies, and send it to you.
+                </p>
+                {resume_path && (
+                    <div style="margin-top: 1.5rem; margin-bottom: 2rem;">
+                        <a href={`/${resume_path}`} download class="btn primary">
+                            <span class="icon">⬇</span> Download Resume
+                        </a>
+                    </div>
+                )}
+            </div>
             
             {resume_path && (
-                <>
-                    <a href={`/${resume_path}`} download class="download-link">Resume</a>
-                    <br>
-                    <object class="resume-container" data={`/${resume_path}`} type="application/pdf">
+                <div class="pdf-container">
+                    <object data={`/${resume_path}`} type="application/pdf" width="100%" height="800px">
                         <embed src={`/${resume_path}`} type="application/pdf" />
                     </object>
-                </>
+                </div>
             )}
         </section>
-        <hr class="section-divider" style="max-width: 70vw;">
     </div>
 </BaseLayout>
+
+<style>
+    .page-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4rem;
+    }
+
+    .section-title {
+        font-size: 2.25rem;
+        margin-bottom: 2rem;
+        font-weight: 800;
+        display: inline-block;
+        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .resume-desc {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        max-width: 800px;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+        padding: 0.8rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        background-color: var(--accent-color);
+        color: #fff;
+    }
+
+    .btn:hover {
+        background-color: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .pdf-container {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+</style>
