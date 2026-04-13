@@ -10,6 +10,7 @@ on:
       - 'profile.db'
       - 'package.json'
       - 'astro.config.mjs'
+  workflow_dispatch:
 
 jobs:
   build:
