@@ -1,0 +1,201 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+  name: string;
+  location: string;
+  email: string;
+  phone: string;
+  github: string;
+  linkedin: string;
+  introHtml: string;
+}
+
+const { name, location, email, phone, github, linkedin, introHtml } = Astro.props;
+const firstName = name.split(" ")[0];
+---
+
+<div class="hero-container">
+  
+  <div class="hero-image-wrapper">
+    <Image src="/image.webp" alt={name || "Profile Image"} width="340" height="340" class="hero-image" fetchpriority="high" />
+  </div>
+
+  <div class="hero-content">
+    <h1 class="hero-title">
+      Hi, I'm <span class="gradient-text">{firstName}</span>.
+    </h1>
+    <p class="hero-subtitle">
+      Research Scientist & Developer based in {location}.
+    </p>
+    
+    <div class="hero-description" set:html={introHtml} />
+
+    <div class="hero-contact glass-panel">
+      <div class="contact-links">
+        <a href={`mailto:${email}`} class="contact-item">
+          <span class="icon">✉</span> {email}
+        </a>
+        <a href={`tel:${phone}`} class="contact-item">
+          <span class="icon">☎</span> {phone}
+        </a>
+        <a href={github} target="_blank" class="contact-item">
+          <span class="icon">💻</span> GitHub
+        </a>
+        <a href={linkedin} target="_blank" class="contact-item">
+          <span class="icon">💼</span> LinkedIn
+        </a>
+      </div>
+    </div>
+    
+    <div class="hero-actions">
+      <a href="/overview" class="btn primary">View Overview</a>
+      <a href="/resume" class="btn secondary">Resume</a>
+    </div>
+  </div>
+  
+  <!-- Clear the float so elements below don't wrap tightly against the image -->
+  <div style="clear: both;"></div>
+</div>
+
+<style>
+  .hero-container {
+    display: block; /* Switch from flex to block to allow floating */
+    padding: 2rem 0 4rem;
+  }
+
+  .hero-content {
+    /* No flex properties needed here anymore */
+  }
+
+  /* MOBILE LAYOUT: Center image above text */
+  .hero-image-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto 2rem;
+  }
+
+  /* DESKTOP LAYOUT: Float image to the right so text wraps around it */
+  @media (min-width: 768px) {
+    .hero-image-wrapper {
+      float: right;
+      display: block;
+      margin: 0.5rem 0 1.5rem 2.5rem;
+      width: 320px; /* match image width */
+    }
+  }
+
+  .hero-title {
+    font-size: 2.25rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+
+  @media (min-width: 768px) {
+    .hero-title {
+      font-size: 3rem;
+      line-height: 1.1;
+    }
+  }
+  
+  .gradient-text {
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  .hero-description {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  /* Force the description text to wrap cleanly around floats */
+  .hero-description :global(p) {
+    margin-bottom: 1rem;
+  }
+
+  .hero-contact {
+    padding: 1rem 1.5rem;
+    margin-bottom: 2.5rem;
+    display: inline-block; /* Prevent full-width bleeding under the float */
+    max-width: 100%;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .contact-item:hover {
+    color: var(--accent-color);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .primary {
+    background-color: var(--accent-color);
+    color: #fff;
+  }
+  .primary:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .secondary {
+    background-color: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+  }
+  .secondary:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    transform: translateY(-2px);
+  }
+
+  .hero-image {
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease;
+  }
+  
+  .hero-image:hover {
+    transform: translateY(-4px) scale(1.02);
+  }
+</style>

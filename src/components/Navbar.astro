@@ -1,0 +1,351 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+  current_page?: string;
+}
+const { current_page = 'home' } = Astro.props;
+
+const navItems = [
+  { path: '/', label: 'Home', id: 'home' },
+  { path: '/overview', label: 'Overview', id: 'overview' },
+  { path: '/experience_education', label: 'Experience & Education', id: 'experience_education' },
+  { path: '/projects_certificates', label: 'Projects & Certifications', id: 'projects_certificates' },
+  { path: '/awards_interests', label: 'Awards & Interests', id: 'awards_interests' },
+  { path: '/resume', label: 'Resume', id: 'resume' },
+];
+
+const currentNavItem = navItems.find(item => item.id === current_page) || navItems[0];
+const currentLabel = currentNavItem.label;
+---
+
+<header class="navbar glass-panel">
+  <div class="navbar-container">
+    <div class="logo-area">
+      <a href="/" class="logo-link">
+        <Image src="/logos/profile_logo.webp" alt="Logo" width={40} height={40} fetchpriority="high" />
+      </a>
+    </div>
+
+    <nav class="nav-links">
+      <ul class="nav-list">
+        {navItems.map(item => (
+          <li>
+            <a 
+              href={item.path} 
+              class={`nav-item ${current_page === item.id ? 'active' : ''}`}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="actions">
+      <div class="dark-mode-toggle">
+        <input type="checkbox" id="dark-mode-toggle" aria-label="Toggle Dark Mode">
+        <label for="dark-mode-toggle" class="toggle-label">
+          <span class="toggle-icon moon">&#127761;</span>
+          <span class="toggle-icon sun">&#127774;</span>
+        </label>
+      </div>
+    </div>
+
+    <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Navigation Menu">
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+      <span class="mobile-current-page">{currentLabel}</span>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('mobile-menu-btn');
+    const nav = document.querySelector('.nav-links');
+    
+    if (btn && nav) {
+      // Toggle menu on button click
+      btn.addEventListener('click', (e) => {
+        nav.classList.toggle('show');
+        btn.classList.toggle('open');
+        e.stopPropagation();
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (nav.classList.contains('show')) {
+          // If the click is NOT inside the nav container
+          if (!nav.contains(e.target as Node)) {
+            nav.classList.remove('show');
+            btn.classList.remove('open');
+          }
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .navbar {
+    position: sticky;
+    top: 1rem;
+    z-index: 1000;
+    margin-bottom: 2rem;
+    border-radius: 9999px; /* Pill shape */
+    padding: 0.5rem 1.5rem;
+  }
+
+  .navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 90vw;
+    margin: 0 auto;
+    position: relative;
+    flex-wrap: nowrap; /* Force single line on all devices */
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 1400px) {
+    .navbar-container {
+      max-width: 1280px;
+    }
+  }
+
+  .logo-link {
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+  }
+  .logo-link:hover {
+    transform: scale(1.05);
+  }
+
+  /* MOBILE FIRST DEFAULT */
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 1rem;
+    background: var(--surface-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    z-index: 1001;
+  }
+
+  .nav-links.show {
+    display: block;
+  }
+
+  .nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    list-style: none;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    order: 3; /* Mobile: right */
+  }
+
+  @media (min-width: 900px) {
+    .actions {
+      order: 0; /* Reset on desktop */
+      /* Logo and actions now take only their natural width */
+      justify-content: flex-end;
+    }
+    
+    .logo-area {
+      display: flex;
+      justify-content: flex-start;
+    }
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    flex: 1;
+    min-width: 0; /* Prevents button from violently pushing siblings when text is long */
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.8rem;
+    gap: 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease;
+    order: 2; /* Mobile: center */
+  }
+
+  .mobile-menu-btn:hover {
+    background: var(--bg-color);
+  }
+
+  .mobile-current-page {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chevron {
+    transition: transform 0.3s ease;
+  }
+
+  .mobile-menu-btn.open .chevron {
+    transform: rotate(180deg);
+  }
+
+  @media (min-width: 900px) {
+    .navbar-container {
+      flex-wrap: nowrap;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1; /* Now consumes ALL remaining horizontal space */
+      width: 100%;
+      position: static;
+      transform: none;
+      background: none;
+      padding: 0 2rem; /* Add some margin around the buttons */
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+      margin-top: 0;
+    }
+
+    .nav-list {
+      flex-direction: row;
+      flex: 1; /* Forcibly expands internal list to max bounds */
+      width: 100%;
+      justify-content: space-evenly;
+      gap: 1.5rem; /* Responsive gap using consistent rem units */
+    }
+  }
+
+  .nav-item {
+    display: block;
+    width: 100%;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    text-align: center;
+    font-weight: 500;
+    padding: 0.8rem 1rem;
+    position: relative;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .nav-item:hover, .nav-item.active {
+    color: var(--text-primary);
+    background-color: var(--bg-color); /* Light hover background on mobile */
+  }
+
+  @media (min-width: 900px) {
+    .nav-item {
+      display: inline-block;
+      width: auto;
+      text-align: left;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.2rem;
+      border-radius: 0;
+      background-color: transparent !important; /* No background hover on desktop */
+    }
+    .nav-item::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      transform: scaleX(0);
+      height: 2px;
+      bottom: 0;
+      left: 0;
+      background-color: var(--text-primary);
+      transform-origin: bottom right;
+      transition: transform 0.25s ease-out;
+    }
+
+    .nav-item:hover::after, .nav-item.active::after {
+      transform: scaleX(1);
+      transform-origin: bottom left;
+    }
+  }
+
+  .dark-mode-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+  }
+
+  .dark-mode-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-label {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border-color);
+    transition: .4s;
+    border-radius: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+  }
+
+  .toggle-label:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    z-index: 2;
+  }
+
+  input:checked + .toggle-label {
+    background-color: var(--accent-color);
+  }
+
+  input:checked + .toggle-label:before {
+    transform: translateX(24px);
+  }
+
+  .toggle-icon {
+    font-size: 12px;
+    z-index: 1;
+  }
+</style>

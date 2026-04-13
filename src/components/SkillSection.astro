@@ -1,0 +1,106 @@
+---
+interface Props {
+  skillsDictionary: Record<string, Record<string, string[]>>; // subcategory: { proficiency: [skills] }
+}
+
+const { skillsDictionary } = Astro.props;
+
+// Group logic
+const proficiencyOrder = ["Advanced", "Intermediate", "Beginner"];
+const profColorMap = {
+  "Advanced": "prof-adv",
+  "Intermediate": "prof-int",
+  "Beginner": "prof-beg"
+};
+---
+
+<div class="skills-container">
+  {Object.entries(skillsDictionary).map(([category, proficiencies]) => (
+    <div class="skill-category glass-panel">
+      <h3 class="category-title">{category}</h3>
+      <div class="skills-list">
+        {proficiencyOrder.map(prof => {
+          if (proficiencies[prof] && proficiencies[prof].length > 0) {
+             return proficiencies[prof].map(skill => (
+               <span class={`skill-badge ${profColorMap[prof]}`} title={prof}>
+                 {skill}
+               </span>
+             ));
+          }
+          return null;
+        })}
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .skills-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .skills-container {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+  }
+
+  .skill-category {
+    padding: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .skill-category:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .category-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+  }
+
+  .skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .skill-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 9999px; /* Pill shape */
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    cursor: default;
+  }
+
+  .skill-badge:hover {
+    transform: scale(1.05);
+  }
+
+  /* Proficiency Hint Lines */
+  .prof-adv {
+    border-left: 4px solid #10b981; /* Emerald */
+  }
+  .prof-int {
+    border-left: 4px solid #3b82f6; /* Blue */
+    opacity: 0.9;
+  }
+  .prof-beg {
+    border-left: 4px solid #f59e0b; /* Amber */
+    opacity: 0.75;
+  }
+</style>
