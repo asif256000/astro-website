@@ -135,3 +135,43 @@ hr {
   background: var(--border-color);
   margin: 2rem 0;
 }
+
+/* Logo-box: fixed 80×80 flex container — centers any logo regardless of aspect ratio */
+.logo-box {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Images inside logo-box: never overflow, but always take up at least 65% of the
+   box height. object-fit: fill does the stretching when min-height kicks in,
+   giving graceful "wiggle room" for very wide logos without them disappearing. */
+.logo-box img {
+  max-width: 80px;
+  max-height: 80px;
+  min-height: 52px;  /* ~65% floor — wide logos get visible height */
+  width: auto;
+  object-fit: fill;  /* slight distortion accepted over invisible logo */
+}
+
+/* Footer logo box: fixed 48×48 flex container for social/footer icons */
+.footer-logo-box {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Same floor pattern for footer logos (≈62% of 48px) */
+.footer-logo-box img {
+  max-width: 48px;
+  max-height: 48px;
+  min-height: 30px;
+  width: auto;
+  object-fit: fill;
+}
+
