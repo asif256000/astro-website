@@ -3,6 +3,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
 import db from '../utils/db.js';
 
+// Build-time logo map: Astro optimises every PNG in src/assets/logos/
+const logoMap = import.meta.glob<{ default: ImageMetadata }>('../assets/logos/*.png', { eager: true });
+const getLogo = (name: string): ImageMetadata | null =>
+    logoMap[`../assets/logos/${name}.png`]?.default ?? null;
+
+// Proportionally scale any logo to fit inside a square box.
+// Constrains the LARGER dimension so the image fills the box without distortion,
+// regardless of whether it's landscape, portrait, or square.
+const logoFitProps = (meta: ImageMetadata, box: number) =>
+    meta.width >= meta.height ? { width: box } : { height: box };
+
 // Query data
 let basic_info = null;
 let education = [];
@@ -72,7 +83,10 @@ const isFutureDate = (dateString) => {
                             <div class="card-header-flex">
                                 <div class="logo-box">
                                     <a href={exp.company_link} class="image-link" target="_blank">
-                                        <Image src={`/logos/${exp.company_logo}.webp`} alt={exp.company} width="80" height="80" />
+                                        {(() => {
+                                            const s = getLogo(exp.company_logo);
+                                            return s && <Image src={s} alt={exp.company} {...logoFitProps(s, 80)} />;
+                                        })()}
                                     </a>
                                 </div>
                                 <div class="title-box">
@@ -120,7 +134,10 @@ const isFutureDate = (dateString) => {
                             <div class="card-header-flex">
                                 <div class="logo-box">
                                     <a href={edu.institution_link} class="image-link" target="_blank">
-                                        <Image src={`/logos/${edu.institution_logo}.webp`} alt={edu.institution} width="80" height="80" />
+                                        {(() => {
+                                            const s = getLogo(edu.institution_logo);
+                                            return s && <Image src={s} alt={edu.institution} {...logoFitProps(s, 80)} />;
+                                        })()}
                                     </a>
                                 </div>
                                 <div class="title-box">
