@@ -21,6 +21,9 @@ const { title, current_page = 'home' } = Astro.props;
     <title>{title}</title>
     <link href="/logos/profile_logo.ico" rel="icon">
     <meta name="description" content="Personal profile and portfolio website of Asif Iqbal. Explore my experiences, education, and latest projects.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <ClientRouter />
     <slot name="head" />
 </head>
@@ -83,11 +86,18 @@ const { title, current_page = 'home' } = Astro.props;
         document.addEventListener('astro:after-swap', () => {
             const darkMode = localStorage.getItem("darkMode");
             const systemDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-            if (darkMode === "enabled" || (!darkMode && systemDarkMode)) {
+            const isDark = darkMode === "enabled" || (!darkMode && systemDarkMode);
+
+            if (isDark) {
                 document.body.classList.add("dark-mode");
             } else {
                 document.body.classList.remove("dark-mode");
             }
+
+            // Sync toggle checked state BEFORE the browser paints to prevent the
+            // visible animation caused by the checkbox going unchecked → checked.
+            const toggle = document.getElementById("dark-mode-toggle");
+            if (toggle) toggle.checked = isDark;
         });
 
         // Reattach event listeners on every page load (initial + after view transitions)
