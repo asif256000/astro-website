@@ -1,5 +1,6 @@
 ---
-import { Image } from 'astro:assets';
+import { Picture } from 'astro:assets';
+import profileImage from '../assets/image.png';
 
 interface Props {
   name: string;
@@ -18,7 +19,17 @@ const firstName = name.split(" ")[0];
 <div class="hero-container">
   
   <div class="hero-image-wrapper">
-    <Image src="/image.webp" alt={name || "Profile Image"} width="340" height="340" class="hero-image" fetchpriority="high" />
+    <Picture
+      src={profileImage}
+      widths={[340, 680]}
+      sizes="340px"
+      formats={['avif', 'webp']}
+      alt={name || "Profile Image"}
+      width={340}
+      height={340}
+      class="hero-image"
+      fetchpriority="high"
+    />
   </div>
 
   <div class="hero-content">
