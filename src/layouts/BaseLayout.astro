@@ -76,13 +76,26 @@ const { title, current_page = 'home' } = Astro.props;
         ↑
     </button>
 
-    <!-- Reattach event listeners on page load for view transitions -->
+    <!-- Re-apply dark mode class immediately after ClientRouter swaps the DOM -->
     <script>
+        // astro:after-swap fires after the DOM is replaced but before the browser paints,
+        // preventing any flash of the wrong theme during soft navigations.
+        document.addEventListener('astro:after-swap', () => {
+            const darkMode = localStorage.getItem("darkMode");
+            const systemDarkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            if (darkMode === "enabled" || (!darkMode && systemDarkMode)) {
+                document.body.classList.add("dark-mode");
+            } else {
+                document.body.classList.remove("dark-mode");
+            }
+        });
+
+        // Reattach event listeners on every page load (initial + after view transitions)
         document.addEventListener('astro:page-load', () => {
             const darkModeToggle = document.getElementById("dark-mode-toggle");
             const body = document.body;
 
-            // Set initial state of toggle based on body class
+            // Sync toggle state with current body class
             if (darkModeToggle) {
                 darkModeToggle.checked = body.classList.contains("dark-mode");
 
@@ -109,7 +122,7 @@ const { title, current_page = 'home' } = Astro.props;
                 };
                 window.addEventListener('scroll', checkScroll);
                 checkScroll(); // Initial evaluation
-                
+
                 scrollBtn.addEventListener('click', () => {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
