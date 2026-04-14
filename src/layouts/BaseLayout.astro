@@ -36,7 +36,21 @@ const logoFitProps = (meta: ImageMetadata, box: number) =>
     <meta name="description" content="Personal profile and portfolio website of Asif Iqbal. Explore my experiences, education, and latest projects.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!--
+      All fonts in one request (Inter + Fira Code + JetBrains Mono).
+      Loaded non-blocking via the media=print trick: the browser downloads
+      the font CSS in parallel with rendering, then flips to 'all' on load.
+      Space Grotesk removed — hero-title now uses JetBrains Mono.
+    -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap"
+      media="print"
+      onload="this.media='all'"
+    >
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap">
+    </noscript>
     <ClientRouter />
     <slot name="head" />
 </head>
