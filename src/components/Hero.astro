@@ -23,7 +23,16 @@ const firstName = name.split(" ")[0];
 
   <div class="hero-content">
     <h1 class="hero-title">
-      Hi, I'm <span class="gradient-text">{firstName}</span>.
+      <span class="typewriter-wrapper">
+        <span
+          class="typewriter-text"
+          id="typewriter-text"
+          data-plain1="Hi, I'm "
+          data-accent={firstName}
+          data-plain2="."
+        ></span>
+        <span class="type-cursor" id="type-cursor"></span>
+      </span>
     </h1>
     <p class="hero-subtitle">
       Research Scientist & Developer based in {location}.
@@ -58,6 +67,84 @@ const firstName = name.split(" ")[0];
   <div style="clear: both;"></div>
 </div>
 
+<script>
+  function runTypewriter() {
+    const wrapper = document.getElementById('typewriter-text');
+    const cursorEl = document.getElementById('type-cursor');
+    if (!wrapper || !cursorEl) return;
+
+    // Read segments from data attributes (server-rendered values)
+    const plain1 = wrapper.dataset.plain1 ?? "Hi, I'm ";
+    const accent  = wrapper.dataset.accent  ?? '';
+    const plain2  = wrapper.dataset.plain2  ?? '.';
+
+    const segments = [
+      { text: plain1,  cls: null },
+      { text: accent,  cls: 'gradient-text' },
+      { text: plain2,  cls: null },
+    ];
+
+    // Clear old content and reset cursor
+    wrapper.innerHTML = '';
+    cursorEl.classList.remove('done');
+
+    // Pre-create one <span> per segment (empty, appended in order)
+    const spans = segments.map(({ cls }) => {
+      const span = document.createElement('span');
+      if (cls) span.className = cls;
+      wrapper.appendChild(span);
+      return span;
+    });
+
+    // --- Delay helpers (all in ms) ---
+    const rand = (min, max) => min + Math.random() * (max - min);
+    const charDelay  = () => rand(65, 145);   // normal letters
+    const wordDelay  = () => rand(210, 390);  // after a space (between words)
+    const punctDelay = () => rand(130, 230);  // after .,!?';
+
+    let segIdx = 0;
+    let charIdx = 0;
+    let totalChars = 0; // for estimating cursor-hide timing
+
+    function typeNext() {
+      // Advance to next non-empty segment if current is exhausted
+      while (segIdx < segments.length && charIdx >= segments[segIdx].text.length) {
+        segIdx++;
+        charIdx = 0;
+      }
+
+      if (segIdx >= segments.length) {
+        // All done — blink 3 more times, then hide cursor
+        setTimeout(() => cursorEl.classList.add('done'), 700);
+        return;
+      }
+
+      const char = segments[segIdx].text[charIdx];
+      spans[segIdx].textContent += char;
+      charIdx++;
+      totalChars++;
+
+      // Choose delay based on the character just typed
+      let delay;
+      if (char === ' ') {
+        delay = wordDelay();
+      } else if ('.,;:!?\'`'.includes(char)) {
+        delay = punctDelay();
+      } else {
+        delay = charDelay();
+      }
+
+      setTimeout(typeNext, delay);
+    }
+
+    // Brief pause before starting
+    setTimeout(typeNext, 420);
+  }
+
+  // Fire on hard load AND every soft navigation back to this page
+  document.addEventListener('astro:page-load', runTypewriter);
+</script>
+
 <style>
   .hero-container {
     display: block; /* Switch from flex to block to allow floating */
@@ -89,13 +176,52 @@ const firstName = name.split(" ")[0];
     font-size: 2.25rem;
     margin-bottom: 0.5rem;
     line-height: 1.2;
+    /* Terminal typeface for the typewriter heading */
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
   @media (min-width: 768px) {
     .hero-title {
-      font-size: 3rem;
+      font-size: 2.75rem;
       line-height: 1.1;
     }
+  }
+
+  /* Typewriter container: keeps cursor tight to the last character */
+  .typewriter-wrapper {
+    display: inline-flex;
+    align-items: baseline;
+    position: relative;
+  }
+
+  /* JS fills this progressively — no CSS animation needed */
+  .typewriter-text {
+    display: inline;
+  }
+
+  .type-cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1em;
+    background: var(--text-primary);
+    margin-left: 3px;
+    vertical-align: text-bottom;
+    border-radius: 1px;
+    animation: blink 0.7s step-end infinite;
+    flex-shrink: 0;
+  }
+
+  /* Cursor blinks a few more times then disappears */
+  .type-cursor.done {
+    animation: blink 0.7s step-end 3;
+    opacity: 0;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
   }
   
   .gradient-text {
