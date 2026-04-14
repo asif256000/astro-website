@@ -1,8 +1,14 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import Navbar from '../components/Navbar.astro';
+
+import profileLogoSrc from '../assets/logos/profile_logo.png';
+import linkedinSrc    from '../assets/logos/linkedin.png';
+import githubSrc      from '../assets/logos/github.png';
+import gscholarSrc    from '../assets/logos/gscholar.png';
+import orcidSrc       from '../assets/logos/orcid.png';
 
 interface Props {
 	title: string;
@@ -10,6 +16,13 @@ interface Props {
 }
 
 const { title, current_page = 'home' } = Astro.props;
+
+// Generate an optimised 64×64 favicon at build time from the PNG source
+const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, format: 'png' });
+
+// Proportionally scale any logo to fit inside a square box — no name lists needed.
+const logoFitProps = (meta: ImageMetadata, box: number) =>
+    meta.width >= meta.height ? { width: box } : { height: box };
 ---
 
 <!DOCTYPE html>
@@ -19,7 +32,7 @@ const { title, current_page = 'home' } = Astro.props;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
-    <link href="/logos/profile_logo.ico" rel="icon">
+    <link href={favicon.src} rel="icon" type="image/png">
     <meta name="description" content="Personal profile and portfolio website of Asif Iqbal. Explore my experiences, education, and latest projects.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,20 +65,20 @@ const { title, current_page = 'home' } = Astro.props;
         <footer class="glass-panel">
             <p>My Profile</p>
             <div class="social-media-links">
-                <a href="https://www.linkedin.com/in/asif-iqbal-r" target="_blank">
-                    <Image src="/logos/linkedin.webp" alt="LinkedIn" width="48" height="48" class="logo" fetchpriority="low" loading="lazy" />
+                <a href="https://www.linkedin.com/in/asif-iqbal-r" target="_blank" class="footer-logo-box">
+                    <Image src={linkedinSrc} alt="LinkedIn" {...logoFitProps(linkedinSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
                 &nbsp;&nbsp;&nbsp;
-                <a href="https://github.com/asif256000" target="_blank">
-                    <Image src="/logos/github.webp" alt="GitHub" width="48" height="48" class="logo" fetchpriority="low" loading="lazy" />
+                <a href="https://github.com/asif256000" target="_blank" class="footer-logo-box">
+                    <Image src={githubSrc} alt="GitHub" {...logoFitProps(githubSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
                 &nbsp;&nbsp;&nbsp;
-                <a href="https://scholar.google.com/citations?hl=en&user=EImUgsAAAAAJ" target="_blank">
-                    <Image src="/logos/gscholar.webp" alt="GoogleScholar" width="48" height="48" class="logo" fetchpriority="low" loading="lazy" />
+                <a href="https://scholar.google.com/citations?hl=en&user=EImUgsAAAAAJ" target="_blank" class="footer-logo-box">
+                    <Image src={gscholarSrc} alt="GoogleScholar" {...logoFitProps(gscholarSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
                 &nbsp;&nbsp;&nbsp;
-                <a href="https://orcid.org/0009-0008-8317-8133" target="_blank">
-                    <Image src="/logos/orcid.webp" alt="ORCID" width="48" height="48" class="logo" fetchpriority="low" loading="lazy" />
+                <a href="https://orcid.org/0009-0008-8317-8133" target="_blank" class="footer-logo-box">
+                    <Image src={orcidSrc} alt="ORCID" {...logoFitProps(orcidSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
             </div>
             <div style="margin-top: 1rem;">
