@@ -5,6 +5,15 @@ import db from '../utils/db.js';
 import Card from '../components/Card.astro';
 import SkillSection from '../components/SkillSection.astro';
 
+// Build-time logo map: Astro optimises every PNG in src/assets/logos/
+const logoMap = import.meta.glob<{ default: ImageMetadata }>('../assets/logos/*.png', { eager: true });
+const getLogo = (name: string): ImageMetadata | null =>
+    logoMap[`../assets/logos/${name}.png`]?.default ?? null;
+
+// Proportionally scale any logo to fit inside a square box.
+const logoFitProps = (meta: ImageMetadata, box: number) =>
+    meta.width >= meta.height ? { width: box } : { height: box };
+
 // Query data
 let basic_info = null;
 let education = [];
@@ -138,18 +147,22 @@ const timeline_events = [
                                     )}
                                 </div>
                                 
-                                {((event.event_type === 'education' && event.institution_logo) || (event.event_type === 'experience' && event.company_logo)) && (
-                                    <a href={event.event_type === 'education' ? event.institution_link : event.company_link} class="timeline-logo-link" target="_blank" rel="noopener">
-                                        <Image 
-                                            src={`/logos/${event.event_type === 'education' ? event.institution_logo : event.company_logo}.webp`} 
-                                            alt={event.event_type === 'education' ? event.institution : event.company} 
-                                            width="80" 
-                                            height="80" 
-                                            fetchpriority="low" 
-                                            loading="lazy" 
-                                        />
-                                    </a>
-                                )}
+                                {((event.event_type === 'education' && event.institution_logo) || (event.event_type === 'experience' && event.company_logo)) && (() => {
+                                    const logoName = event.event_type === 'education' ? event.institution_logo : event.company_logo;
+                                    const logoSrc = getLogo(logoName);
+                                    if (!logoSrc) return null;
+                                    return (
+                                        <a href={event.event_type === 'education' ? event.institution_link : event.company_link} class="timeline-logo-link" target="_blank" rel="noopener">
+                                            <Image
+                                                src={logoSrc}
+                                                alt={event.event_type === 'education' ? event.institution : event.company}
+                                                {...logoFitProps(logoSrc, 80)}
+                                                fetchpriority="low"
+                                                loading="lazy"
+                                            />
+                                        </a>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
