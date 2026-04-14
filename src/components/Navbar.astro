@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+import profileLogoSrc from '../assets/logos/profile_logo.png';
 
 interface Props {
   current_page?: string;
@@ -23,7 +24,7 @@ const currentLabel = currentNavItem.label;
   <div class="navbar-container">
     <div class="logo-area">
       <a href="/" class="logo-link">
-        <Image src="/logos/profile_logo.webp" alt="Logo" width={40} height={40} fetchpriority="high" />
+        <Image src={profileLogoSrc} alt="Logo" width={40} height={40} fetchpriority="high" />
       </a>
     </div>
 
