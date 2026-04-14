@@ -70,6 +70,12 @@ const formatDate = (dateString, format = 'YYYY-MM') => {
     return `${year}-${month}`;
 };
 
+const isFutureDate = (dateString) => {
+    if (!dateString) return false;
+    const d = new Date(dateString);
+    return !isNaN(d) && d > new Date();
+};
+
 const curr_date = new Date().toISOString().slice(0, 7);
 const resume_path = resume.length > 0 ? resume[0].file_path : '';
 
@@ -110,7 +116,7 @@ const timeline_events = [
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <span class="timeline-date">
-                                {formatDate(event.duration_start, 'YYYY-MM')} &mdash; {event.duration_end ? formatDate(event.duration_end, 'YYYY-MM') : 'Present'}
+                                {formatDate(event.duration_start, 'YYYY-MM')}{isFutureDate(event.duration_start) ? ' (exp)' : ''} &mdash; {event.duration_end ? `${formatDate(event.duration_end, 'YYYY-MM')}${isFutureDate(event.duration_end) ? ' (exp)' : ''}` : 'Present'}
                             </span>
                             
                             <h3 class="timeline-title">
@@ -173,7 +179,7 @@ const timeline_events = [
                 {certifications.map(cert => (
                     <Card title={cert.title} subtitle={`Issued by ${cert.issuer}`}>
                         {cert.link ? (
-                            <p><a href={cert.link}>View Certificate</a> received on <b>{formatDate(cert.achievement_date, 'YYYY-MMM')}</b></p>
+                            <p><a href={cert.link}>View Certificate</a> received on <b>{formatDate(cert.achievement_date, 'YYYY-MMM')}{isFutureDate(cert.achievement_date) ? ' (exp)' : ''}</b></p>
                         ) : (
                             <p>TBD</p>
                         )}

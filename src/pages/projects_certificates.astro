@@ -30,6 +30,12 @@ const formatDate = (dateString, format = 'YYYY-MM-DD') => {
     
     return `${year}-${month}-${day}`;
 };
+
+const isFutureDate = (dateString) => {
+    if (!dateString) return false;
+    const d = new Date(dateString);
+    return !isNaN(d) && d > new Date();
+};
 ---
 
 <BaseLayout 
@@ -60,7 +66,7 @@ const formatDate = (dateString, format = 'YYYY-MM-DD') => {
                     <Card 
                         title={cert.title} 
                         subtitle={`Issued by ${cert.issuer}`}
-                        date={cert.link ? formatDate(cert.achievement_date) : undefined}
+                        date={cert.link ? `${formatDate(cert.achievement_date)}${isFutureDate(cert.achievement_date) ? ' (exp)' : ''}` : undefined}
                         link={cert.link}
                     >
                         <p>{cert.description}</p>

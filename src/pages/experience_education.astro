@@ -45,6 +45,12 @@ const safeParseJSON = (str) => {
         return null;
     }
 };
+
+const isFutureDate = (dateString) => {
+    if (!dateString) return false;
+    const d = new Date(dateString);
+    return !isNaN(d) && d > new Date();
+};
 ---
 
 <BaseLayout 
@@ -73,7 +79,7 @@ const safeParseJSON = (str) => {
                                     <h3 class="role-title">{exp.title}</h3>
                                     <h4 class="company-name">{exp.company} — {exp.location}</h4>
                                     <span class="duration-badge">
-                                        {formatDate(exp.duration_start)} to {exp.duration_end ? formatDate(exp.duration_end) : 'Present'}
+                                        {formatDate(exp.duration_start)}{isFutureDate(exp.duration_start) ? ' (exp)' : ''} to {exp.duration_end ? `${formatDate(exp.duration_end)}${isFutureDate(exp.duration_end) ? ' (exp)' : ''}` : 'Present'}
                                     </span>
                                 </div>
                             </div>
@@ -121,7 +127,7 @@ const safeParseJSON = (str) => {
                                     <h3 class="role-title">{edu.degree} in {edu.major}</h3>
                                     <h4 class="company-name">{edu.institution} — {edu.location}</h4>
                                     <span class="duration-badge">
-                                        {formatDate(edu.duration_start)} to {edu.duration_end ? formatDate(edu.duration_end) : 'Present'}
+                                        {formatDate(edu.duration_start)}{isFutureDate(edu.duration_start) ? ' (exp)' : ''} to {edu.duration_end ? `${formatDate(edu.duration_end)}${isFutureDate(edu.duration_end) ? ' (exp)' : ''}` : 'Present'}
                                     </span>
                                 </div>
                             </div>
