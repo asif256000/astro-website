@@ -28,6 +28,18 @@ body.dark-mode {
   --glass-border: rgba(255, 255, 255, 0.1);
 }
 
+/* In dark mode, primary buttons have a light background (--accent-color is near-white),
+   so the text must be dark to stay readable. */
+body.dark-mode .btn.primary,
+body.dark-mode a.btn.primary {
+  color: #111111;
+}
+
+body.dark-mode .btn.primary:hover,
+body.dark-mode a.btn.primary:hover {
+  color: #000000;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
