@@ -22,17 +22,24 @@ const firstName = name.split(" ")[0];
   </div>
 
   <div class="hero-content">
-    <h1 class="hero-title">
+    <h1 class="hero-title" aria-label={`Hi, I'm ${firstName}.`}>
       <span class="typewriter-wrapper">
-        <span
-          class="typewriter-text"
-          id="typewriter-text"
-          data-plain1="Hi, I'm "
-          data-accent={firstName}
-          data-plain2="."
-        ></span>
-        <span class="type-cursor" id="type-cursor"></span>
+        <!-- Invisible spacer that reserves exact layout space to prevent CLS -->
+        <span class="typewriter-spacer" aria-hidden="true">Hi, I'm {firstName}.</span>
+        <!-- Visible overlay where the animation types character by character -->
+        <span class="typewriter-overlay">
+          <span
+            class="typewriter-text"
+            id="typewriter-text"
+            data-plain1="Hi, I'm "
+            data-accent={firstName}
+            data-plain2="."
+          ></span>
+          <span class="type-cursor" id="type-cursor"></span>
+        </span>
       </span>
+      <!-- Fallback for no-JS environments -->
+      <noscript>Hi, I'm <span class="gradient-text">{firstName}</span>.</noscript>
     </h1>
     <p class="hero-subtitle">
       Research Scientist & Developer based in {location}.
@@ -189,11 +196,29 @@ const firstName = name.split(" ")[0];
     }
   }
 
-  /* Typewriter container: keeps cursor tight to the last character */
+  /* Typewriter wrapper: stacks spacer and overlay in the same box */
   .typewriter-wrapper {
+    display: inline-block;
+    position: relative;
+  }
+
+  /* Invisible text that pre-reserves the exact h1 height — prevents CLS */
+  .typewriter-spacer {
+    visibility: hidden;
+    white-space: nowrap;
+    display: block;
+    /* gradient-text uses background-clip which is invisible anyway,
+       but we need the spacer to match the full rendered width */
+  }
+
+  /* Overlay sits exactly on top of the spacer */
+  .typewriter-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
     display: inline-flex;
     align-items: baseline;
-    position: relative;
+    white-space: nowrap;
   }
 
   /* JS fills this progressively — no CSS animation needed */
