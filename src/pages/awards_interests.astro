@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import db from '../utils/db.js';
 import Card from '../components/Card.astro';
+import { getImage } from 'astro:assets';
 
 // Query data
 let basic_info = null;
@@ -31,6 +32,75 @@ const arrangeInterests = (all) => {
 };
 
 const arranged_interests = arrangeInterests(interests);
+
+// ---------------------------------------------------------------------------
+// Hobbies Gallery — auto-discover all media files at build time
+// ---------------------------------------------------------------------------
+
+// 1. Static images (jpg, jpeg, png, webp) — processed by Astro's image pipeline
+const rawImages = import.meta.glob<{ default: ImageMetadata }>(
+    '../assets/hobbies/*.{jpg,jpeg,png,webp}',
+    { eager: true }
+);
+
+// 2. GIFs — pass through as-is (no transcoding, preserves animation)
+const rawGifs = import.meta.glob<{ default: ImageMetadata }>(
+    '../assets/hobbies/*.gif',
+    { eager: true }
+);
+
+// 3. Videos — import as raw URLs
+const rawVideos = import.meta.glob(
+    '../assets/hobbies/*.{mp4,webm,mov}',
+    { eager: true, query: '?url', import: 'default' }
+);
+
+// Process static images with Astro's optimised pipeline (keep original aspect ratio)
+const processedImages = await Promise.all(
+    Object.entries(rawImages).map(async ([path, mod]) => {
+        const src = mod.default;
+        const optimized = await getImage({ src, format: 'webp' });
+        return {
+            type: 'image' as const,
+            src: optimized.src,
+            width: src.width,
+            height: src.height,
+            alt: path.split('/').pop()?.replace(/\.[^.]+$/, '') ?? 'Hobby photo',
+        };
+    })
+);
+
+// GIFs — use the raw Vite asset URL directly.
+// Do NOT pass through getImage()/Sharp: Sharp re-encodes GIFs which can
+// strip animation frames. Vite copies the file as-is and gives us a
+// hashed public URL via mod.default.src, so no getImage() call is needed.
+const processedGifs = Object.entries(rawGifs).map(([path, mod]) => {
+    const src = mod.default;
+    return {
+        type: 'gif' as const,
+        src: src.src,   // Vite's hashed public URL — already correct for <img>
+        width: src.width,
+        height: src.height,
+        alt: path.split('/').pop()?.replace(/\.[^.]+$/, '') ?? 'Hobby gif',
+    };
+});
+
+// Videos
+const processedVideos = Object.entries(rawVideos).map(([path, url]) => {
+    const filename = path.split('/').pop() ?? '';
+    const ext = filename.split('.').pop()?.toLowerCase() ?? 'mp4';
+    const mimeMap: Record<string, string> = { mp4: 'video/mp4', webm: 'video/webm', mov: 'video/mp4' };
+    return {
+        type: 'video' as const,
+        src: url as string,
+        mime: mimeMap[ext] ?? 'video/mp4',
+        alt: filename.replace(/\.[^.]+$/, ''),
+    };
+});
+
+// Merge everything preserving insertion order (images → gifs → videos)
+const galleryItems = [...processedImages, ...processedGifs, ...processedVideos];
+const hasGallery = galleryItems.length > 0;
 ---
 
 <BaseLayout 
@@ -64,10 +134,241 @@ const arranged_interests = arrangeInterests(interests);
                 })}
             </div>
         </section>
+
+        {hasGallery && (
+        <section id="hobbies-gallery">
+            <h2 class="section-title">Moments in Frames</h2>
+
+            <div class="masonry-gallery" id="masonryGallery">
+                {galleryItems.map((item, i) => (
+                    <div
+                        class="gallery-tile"
+                        data-index={i}
+                        data-type={item.type}
+                        data-src={item.src}
+                        data-alt={item.alt}
+                        style={
+                            item.type !== 'video' && item.width && item.height
+                                ? `aspect-ratio: ${item.width} / ${item.height};`
+                                : ''
+                        }
+                    >
+                        {item.type === 'video' ? (
+                            <video
+                                src={item.src}
+                                muted
+                                loop
+                                playsinline
+                                preload="metadata"
+                                class="tile-media tile-video"
+                                aria-label={item.alt}
+                            >
+                                <source src={item.src} type={item.mime} />
+                            </video>
+                        ) : (
+                            <img
+                                src={item.src}
+                                alt={item.alt}
+                                class="tile-media"
+                                loading="lazy"
+                                decoding="async"
+                                width={item.width}
+                                height={item.height}
+                            />
+                        )}
+                        <div class="tile-overlay">
+                            <span class="tile-expand-icon" aria-hidden="true">⤢</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+        )}
     </div>
+
+    <!-- Lightbox -->
+    {hasGallery && (
+    <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Media lightbox">
+        <!-- Dimmed backdrop — clicking it closes the lightbox -->
+        <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+        <!-- Bounded card -->
+        <div class="lightbox-card">
+            <button class="lightbox-close" id="lightboxClose" aria-label="Close lightbox">✕</button>
+            <div class="lightbox-inner" id="lightboxInner"></div>
+            <div class="lightbox-footer">
+                <div class="lightbox-nav">
+                    <button class="lightbox-prev" id="lightboxPrev" aria-label="Previous">‹</button>
+                    <div class="lightbox-meta">
+                        <div class="lightbox-caption" id="lightboxCaption"></div>
+                        <div class="lightbox-counter" id="lightboxCounter"></div>
+                    </div>
+                    <button class="lightbox-next" id="lightboxNext" aria-label="Next">›</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    )}
 </BaseLayout>
 
+{hasGallery && (
+<script define:vars={{ galleryItems }}>
+    // -----------------------------------------------------------------------
+    // Lightbox controller
+    // -----------------------------------------------------------------------
+    const items   = galleryItems;
+    let current   = 0;
+
+    const lightbox      = document.getElementById('lightbox');
+    const inner         = document.getElementById('lightboxInner');
+    const caption       = document.getElementById('lightboxCaption');
+    const counter       = document.getElementById('lightboxCounter');
+    const closeBtn      = document.getElementById('lightboxClose');
+    const prevBtn       = document.getElementById('lightboxPrev');
+    const nextBtn       = document.getElementById('lightboxNext');
+    const tiles         = document.querySelectorAll('.gallery-tile');
+
+    function renderLightboxItem(idx) {
+        const item = items[idx];
+        inner.innerHTML = '';
+        caption.textContent = item.alt ?? '';
+        counter.textContent = `${idx + 1} / ${items.length}`;
+
+        if (item.type === 'video') {
+            const vid = document.createElement('video');
+            vid.src       = item.src;
+            vid.autoplay  = true;
+            vid.muted     = true;
+            vid.loop      = true;
+            vid.controls  = true;
+            vid.className = 'lightbox-media';
+            inner.appendChild(vid);
+        } else {
+            const img = document.createElement('img');
+            img.src       = item.src;
+            img.alt       = item.alt ?? '';
+            img.className = 'lightbox-media';
+            inner.appendChild(img);
+        }
+    }
+
+    function openLightbox(idx) {
+        // Measure navbar bottom and footer top so the lightbox never overlaps either.
+        // Must be done BEFORE locking scroll so getBoundingClientRect() is accurate.
+        const navbar = document.querySelector('.navbar');
+        const footer = document.querySelector('footer');
+
+        const topOffset    = navbar ? Math.ceil(navbar.getBoundingClientRect().bottom) : 0;
+        const footerTop    = footer ? footer.getBoundingClientRect().top : window.innerHeight;
+        // If footer is above the viewport bottom it's visible — reserve space for it.
+        const bottomOffset = footerTop < window.innerHeight
+            ? Math.ceil(window.innerHeight - footerTop)
+            : 0;
+
+        lightbox.style.setProperty('--lb-top',    `${topOffset}px`);
+        lightbox.style.setProperty('--lb-bottom', `${bottomOffset}px`);
+
+        current = idx;
+        renderLightboxItem(current);
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+        inner.innerHTML = '';
+    }
+
+    function goNext() {
+        current = (current + 1) % items.length;
+        renderLightboxItem(current);
+    }
+
+    function goPrev() {
+        current = (current - 1 + items.length) % items.length;
+        renderLightboxItem(current);
+    }
+
+    tiles.forEach((tile) => {
+        tile.addEventListener('click', () => {
+            openLightbox(Number(tile.dataset.index));
+        });
+    });
+
+    closeBtn?.addEventListener('click', closeLightbox);
+    prevBtn?.addEventListener('click', goPrev);
+    nextBtn?.addEventListener('click', goNext);
+
+    // Clicking the dimmed backdrop (not the card itself) closes the lightbox
+    document.getElementById('lightboxBackdrop')?.addEventListener('click', closeLightbox);
+
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox?.classList.contains('active')) return;
+        if (e.key === 'Escape')      closeLightbox();
+        else if (e.key === 'ArrowRight') goNext();
+        else if (e.key === 'ArrowLeft')  goPrev();
+    });
+
+    // Touch swipe support
+    let touchStartX = 0;
+    lightbox?.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+
+    // After page load: read each video's actual dimensions and apply the correct
+    // aspect-ratio to its tile, then start playback.
+    // preload="metadata" means only the tiny video header is fetched (not the content).
+    document.addEventListener('astro:page-load', () => {
+        document.querySelectorAll('.tile-video').forEach((vid) => {
+            const tile = vid.closest('.gallery-tile');
+
+            const applyRatioAndPlay = () => {
+                if (tile && vid.videoWidth && vid.videoHeight) {
+                    tile.style.aspectRatio = `${vid.videoWidth} / ${vid.videoHeight}`;
+                }
+                vid.play().catch(() => { /* autoplay policy blocked — silently ignore */ });
+            };
+
+            // readyState >= 1 means metadata already available (e.g. cached)
+            if (vid.readyState >= 1) {
+                applyRatioAndPlay();
+            } else {
+                vid.addEventListener('loadedmetadata', applyRatioAndPlay, { once: true });
+            }
+        });
+
+        // Reveal tiles via IntersectionObserver + CSS transition.
+        // This avoids the animation-fill-mode: forwards bug in CSS columns layouts
+        // where hover style recalculations reset animated opacity back to 0.
+        const tiles = document.querySelectorAll('.gallery-tile');
+        let visibleCount = 0;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                const tile = entry.target;
+                // Stagger based on order among currently-revealing tiles (max 500ms)
+                const delay = Math.min(visibleCount * 60, 500);
+                visibleCount++;
+                tile.style.transitionDelay = `${delay}ms`;
+                tile.classList.add('is-visible');
+                // Once visible, clear the delay so hover transitions are instant
+                tile.addEventListener('transitionend', () => {
+                    tile.style.transitionDelay = '';
+                }, { once: true });
+                observer.unobserve(tile);
+            });
+        }, { threshold: 0.05 });
+
+        tiles.forEach((tile) => observer.observe(tile));
+    });
+    lightbox?.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(dx) > 50) { dx < 0 ? goNext() : goPrev(); }
+    });
+</script>
+)}
+
 <style>
+    /* ── Page Layout ─────────────────────────────────────────────── */
     .page-content {
         display: flex;
         flex-direction: column;
@@ -95,5 +396,272 @@ const arranged_interests = arrangeInterests(interests);
         .card-grid {
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         }
+    }
+
+    /* (gallery subtitle removed) */
+
+    /* ── Masonry Grid ────────────────────────────────────────────── */
+    .masonry-gallery {
+        columns: 2 220px;   /* at least 2 cols, each ≥220 px wide */
+        column-gap: 12px;
+    }
+
+    @media (min-width: 600px)  { .masonry-gallery { columns: 3 200px; } }
+    @media (min-width: 900px)  { .masonry-gallery { columns: 4 180px; } }
+    @media (min-width: 1200px) { .masonry-gallery { columns: 5 160px; } }
+
+    /* ── Individual Tile ─────────────────────────────────────────── */
+    .gallery-tile {
+        position: relative;
+        display: block;             /* needed for column break to work */
+        break-inside: avoid;        /* never split a tile across columns */
+        margin-bottom: 12px;
+        border-radius: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        background: var(--surface-color);
+        box-shadow: var(--card-shadow);
+
+        /* Entrance reveal: start invisible; JS adds .is-visible via IntersectionObserver.
+           Using CSS transition (not animation) avoids the forwards fill-mode bug that
+           occurs in CSS columns layouts when hover triggers a style recalculation.
+           All interactive transitions live here (not only in :hover) so un-hovering
+           also transitions smoothly instead of snapping. */
+        opacity: 0;
+        transform: translateY(18px) scale(0.97);
+        transition: opacity 0.45s ease, transform 0.45s ease, box-shadow 0.25s ease;
+    }
+
+    /* Revealed state — added by IntersectionObserver in JS */
+    .gallery-tile.is-visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    .gallery-tile:hover {
+        transform: translateY(-3px) scale(1.01);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+    }
+
+    /* ── Media inside tile ───────────────────────────────────────── */
+
+
+    /* Video tiles start with a placeholder ratio until JS reads the real dimensions
+       from loadedmetadata and overwrites the inline style. */
+    .gallery-tile[data-type="video"] {
+        aspect-ratio: 4 / 3;   /* temporary placeholder — JS replaces this */
+    }
+
+    .tile-media {
+        display: block;
+        width: 100%;
+        height: 100%;          /* fills the aspect-ratio container */
+        object-fit: cover;
+        border-radius: 10px;
+        transition: transform 0.35s ease;
+    }
+
+    .gallery-tile:hover .tile-media {
+        transform: scale(1.05);
+    }
+
+    /* ── Hover overlay ───────────────────────────────────────────── */
+    .tile-overlay {
+        position: absolute;
+        inset: 0;
+        border-radius: 10px;
+        background: linear-gradient(
+            to bottom,
+            transparent 50%,
+            rgba(0, 0, 0, 0.45) 100%
+        );
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+        padding: 0.6rem;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    .gallery-tile:hover .tile-overlay {
+        opacity: 1;
+    }
+
+    .tile-expand-icon {
+        color: #fff;
+        font-size: 1.3rem;
+        line-height: 1;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    /* Invisible overlay that traps focus and dims the page.
+       --lb-top / --lb-bottom are set by JS at open time so the
+       lightbox is always contained between the navbar and footer. */
+    .lightbox {
+        position: fixed;
+        top:    var(--lb-top,    0px);
+        bottom: var(--lb-bottom, 0px);
+        left:   0;
+        right:  0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* Only horizontal safe-area padding needed (top/bottom handled by JS offsets) */
+        padding: 1rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left));
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .lightbox.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Blurred dimmed backdrop — clicking it closes the lightbox */
+    .lightbox-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.82);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        cursor: pointer;
+    }
+
+    /* ── Bounded card (never fills screen on any device) ── */
+    .lightbox-card {
+        position: relative;              /* above the backdrop */
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        max-width: min(92vw, 960px);
+        /* 100% = the lightbox's own bounded height (already clamped between navbar
+           and footer by JS). This means the card can never overflow those bounds. */
+        max-height: 100%;
+        background: rgba(18, 18, 18, 0.92);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        box-shadow: 0 24px 72px rgba(0,0,0,0.7);
+        overflow: hidden;
+    }
+
+    /* Media area */
+    .lightbox-inner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        flex: 1;
+        min-height: 0;         /* allows flex child to shrink */
+        padding: 1rem;
+        overflow: hidden;
+    }
+
+    .lightbox-media {
+        /* Preserve aspect ratio while fitting the bounded inner area.
+           max-height: 100% is relative to .lightbox-inner (flex:1, min-height:0),
+           which itself is bounded by the JS-clamped lightbox height. */
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        border-radius: 8px;
+        object-fit: contain;
+        display: block;
+    }
+
+    /* Footer strip with prev / caption / next */
+    .lightbox-footer {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        background: rgba(0,0,0,0.3);
+    }
+
+    .lightbox-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .lightbox-meta {
+        flex: 1;
+        text-align: center;
+        min-width: 0;
+    }
+
+    .lightbox-caption {
+        color: rgba(255,255,255,0.75);
+        font-size: 0.85rem;
+        letter-spacing: 0.02em;
+        font-style: italic;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lightbox-counter {
+        color: rgba(255,255,255,0.4);
+        font-size: 0.75rem;
+        font-family: 'Fira Code', monospace;
+        margin-top: 0.1rem;
+    }
+
+    /* Close button — pinned to top-right corner of the card */
+    .lightbox-close {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.6rem;
+        z-index: 2;
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.25);
+        color: #fff;
+        border-radius: 50%;
+        /* 44×44 px minimum for comfortable tap targets */
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
+    .lightbox-close:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+
+    /* Prev / Next inside the footer bar */
+    .lightbox-prev,
+    .lightbox-next {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: #fff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.2s ease;
+    }
+
+    .lightbox-prev:hover,
+    .lightbox-next:hover { background: rgba(255,255,255,0.25); }
+
+    /* Extra breathing room on very small phones */
+    @media (max-width: 380px) {
+        .lightbox-card  { max-width: 96vw; border-radius: 12px; }
+        .lightbox-media { max-height: 52vh; }
+        .lightbox-prev,
+        .lightbox-next  { width: 36px; height: 36px; font-size: 1.2rem; }
     }
 </style>
