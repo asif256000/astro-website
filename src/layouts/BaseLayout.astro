@@ -108,6 +108,40 @@ const logoFitProps = (meta: ImageMetadata, box: number) =>
 
     <!-- Re-apply dark mode class immediately after ClientRouter swaps the DOM -->
     <script>
+        // Global spotlight delegation (runs once on bundle execution)
+        let lastPanel = null;
+        document.addEventListener('mousemove', (e) => {
+            const target = e.target;
+            if (!target) return;
+            const panel = target.closest('.glass-panel');
+            
+            if (panel && (panel.classList.contains('navbar') || panel.tagName === 'FOOTER')) {
+                if (lastPanel) {
+                    lastPanel.style.setProperty('--mouse-x', '-999px');
+                    lastPanel.style.setProperty('--mouse-y', '-999px');
+                    lastPanel = null;
+                }
+                return;
+            }
+
+            if (panel) {
+                if (lastPanel && lastPanel !== panel) {
+                    lastPanel.style.setProperty('--mouse-x', '-999px');
+                    lastPanel.style.setProperty('--mouse-y', '-999px');
+                }
+                const rect = panel.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                panel.style.setProperty('--mouse-x', `${x}px`);
+                panel.style.setProperty('--mouse-y', `${y}px`);
+                lastPanel = panel;
+            } else if (lastPanel) {
+                lastPanel.style.setProperty('--mouse-x', '-999px');
+                lastPanel.style.setProperty('--mouse-y', '-999px');
+                lastPanel = null;
+            }
+        });
+
         // astro:after-swap fires after the DOM is replaced but before the browser paints,
         // preventing any flash of the wrong theme during soft navigations.
         document.addEventListener('astro:after-swap', () => {

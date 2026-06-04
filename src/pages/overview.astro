@@ -123,7 +123,7 @@ const timeline_events = [
                 {timeline_events.map(event => (
                     <div class={`timeline-item ${event.event_type}`}>
                         <div class="timeline-dot"></div>
-                        <div class="timeline-content">
+                        <div class="timeline-content glass-panel">
                             <span class="timeline-date">
                                 {formatDate(event.duration_start, 'YYYY-MM')}{isFutureDate(event.duration_start) ? ' (exp)' : ''} &mdash; {event.duration_end ? `${formatDate(event.duration_end, 'YYYY-MM')}${isFutureDate(event.duration_end) ? ' (exp)' : ''}` : 'Present'}
                             </span>
