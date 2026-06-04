@@ -406,6 +406,34 @@ const hasGallery = galleryItems.length > 0;
         column-gap: 12px;
     }
 
+    @media (max-width: 767px) {
+        .masonry-gallery {
+            display: flex;
+            flex-direction: row;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            columns: auto;
+            column-gap: 0;
+            gap: 14px;
+            padding: 0.5rem 5vw 1.5rem;
+            margin: 0 -5vw;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .masonry-gallery::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gallery-tile {
+            flex: 0 0 78vw;
+            scroll-snap-align: center;
+            margin-bottom: 0;
+            aspect-ratio: 3 / 4 !important;
+            height: auto;
+        }
+    }
+
     @media (min-width: 600px)  { .masonry-gallery { columns: 3 200px; } }
     @media (min-width: 900px)  { .masonry-gallery { columns: 4 180px; } }
     @media (min-width: 1200px) { .masonry-gallery { columns: 5 160px; } }
