@@ -56,7 +56,18 @@ const firstName = name.split(" ")[0];
       Research Scientist & Developer based in {location}.
     </p>
     
-    <div class="hero-description" set:html={introHtml} />
+    <div class="seeking-banner glass-panel">
+      <div class="seeking-header">
+        <span class="pulse-dot"></span>
+        <span class="seeking-title">Looking for Internships</span>
+      </div>
+      <p class="seeking-details">
+        Actively seeking Machine Learning & Software Development opportunities in genomics, genetics, phylogenetics, and health data analysis.
+      </p>
+      <p class="seeking-redirect">
+        Explore my background on the <a href="/overview">Overview</a> page, or view my latest <a href="/resume">Resume</a>.
+      </p>
+    </div>
 
     <div class="hero-contact glass-panel">
       <div class="contact-links">
@@ -74,6 +85,8 @@ const firstName = name.split(" ")[0];
         </a>
       </div>
     </div>
+    
+    <div class="hero-description" set:html={introHtml} />
     
     <div class="hero-actions">
       <a href="/overview" class="btn primary">View Overview</a>
@@ -359,5 +372,107 @@ const firstName = name.split(" ")[0];
   
   .hero-image:hover {
     transform: translateY(-4px) scale(1.02);
+  }
+
+  .seeking-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--accent-color);
+    max-width: 650px;
+  }
+
+  .seeking-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .seeking-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.015em;
+    animation: halo-pulse 2.2s infinite ease-in-out;
+    --halo-glow: rgba(120, 120, 120, 0.4);
+  }
+
+  body.dark-mode .seeking-title {
+    --halo-glow: rgba(255, 255, 255, 0.4);
+  }
+
+  @keyframes halo-pulse {
+    0%, 100% {
+      text-shadow: 0 0 2px rgba(0, 0, 0, 0);
+    }
+    50% {
+      text-shadow: 0 0 8px var(--halo-glow), 0 0 16px var(--halo-glow);
+    }
+  }
+
+  .pulse-dot {
+    width: 9px;
+    height: 9px;
+    background-color: #10b981;
+    border-radius: 50%;
+    position: relative;
+    display: inline-block;
+  }
+  
+  body.dark-mode .pulse-dot {
+    background-color: #34d399;
+  }
+
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: inherit;
+    animation: pulse 1.8s infinite ease-in-out;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
+
+  .seeking-details {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    font-weight: 450;
+    margin: 0;
+  }
+
+  .seeking-redirect {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0.4rem 0 0 0;
+    font-weight: 450;
+  }
+
+  .seeking-redirect a {
+    color: var(--accent-color);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 600;
+    transition: color 0.2s ease;
+  }
+
+  .seeking-redirect a:hover {
+    color: var(--accent-hover);
   }
 </style>
