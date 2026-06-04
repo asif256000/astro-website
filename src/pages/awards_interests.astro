@@ -417,6 +417,7 @@ const hasGallery = galleryItems.length > 0;
             gap: 14px;
             padding: 0.5rem 5vw 1.5rem;
             margin: 0 -5vw;
+            height: 340px; /* fixed height for horizontal scroll track */
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
         }
@@ -426,11 +427,11 @@ const hasGallery = galleryItems.length > 0;
         }
 
         .gallery-tile {
-            flex: 0 0 78vw;
+            flex: 0 0 auto;
             scroll-snap-align: center;
             margin-bottom: 0;
-            aspect-ratio: 3 / 4 !important;
-            height: auto;
+            height: 100%;
+            max-width: 85vw;
         }
     }
 
@@ -565,9 +566,8 @@ const hasGallery = galleryItems.length > 0;
         flex-direction: column;
         align-items: center;
         gap: 0;
-        max-width: min(92vw, 960px);
-        /* 100% = the lightbox's own bounded height (already clamped between navbar
-           and footer by JS). This means the card can never overflow those bounds. */
+        width: min(92vw, 960px);
+        height: 80vh;
         max-height: 100%;
         background: rgba(18, 18, 18, 0.92);
         border: 1px solid rgba(255,255,255,0.1);
@@ -588,16 +588,13 @@ const hasGallery = galleryItems.length > 0;
         overflow: hidden;
     }
 
-    .lightbox-media {
-        /* Preserve aspect ratio while fitting the bounded inner area.
-           max-height: 100% is relative to .lightbox-inner (flex:1, min-height:0),
-           which itself is bounded by the JS-clamped lightbox height. */
-        max-width: 100%;
-        max-height: 100%;
-        width: auto;
-        height: auto;
+    :global(.lightbox-media) {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: contain !important;
         border-radius: 8px;
-        object-fit: contain;
         display: block;
     }
 
@@ -688,7 +685,6 @@ const hasGallery = galleryItems.length > 0;
     /* Extra breathing room on very small phones */
     @media (max-width: 380px) {
         .lightbox-card  { max-width: 96vw; border-radius: 12px; }
-        .lightbox-media { max-height: 52vh; }
         .lightbox-prev,
         .lightbox-next  { width: 36px; height: 36px; font-size: 1.2rem; }
     }
