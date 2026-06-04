@@ -179,9 +179,7 @@ const timeline_events = [
             <h2 class="section-title">Projects</h2>
             <div class="grid-list">
                 {projects.map(proj => (
-                    <Card title={proj.title} link={proj.link}>
-                        {!proj.link && "For details, go to Projects & Certifications page..."}
-                    </Card>
+                    <Card title={proj.title} link={proj.link || "/projects_certificates"} />
                 ))}
             </div>
         </section>
@@ -193,9 +191,9 @@ const timeline_events = [
                     <Card title={cert.title} subtitle={`Issued by ${cert.issuer}`}>
                         {cert.link ? (
                             <p><a href={cert.link}>View Certificate</a> received on <b>{formatDate(cert.achievement_date, 'YYYY-MMM')}{isFutureDate(cert.achievement_date) ? ' (exp)' : ''}</b></p>
-                        ) : (
-                            <p>TBD</p>
-                        )}
+                        ) : cert.achievement_date ? (
+                            <p>Received on <b>{formatDate(cert.achievement_date, 'YYYY-MMM')}{isFutureDate(cert.achievement_date) ? ' (exp)' : ''}</b></p>
+                        ) : null}
                     </Card>
                 ))}
             </div>
