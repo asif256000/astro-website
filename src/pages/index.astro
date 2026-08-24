@@ -1,24 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import db from '../utils/db.js';
+import { getData } from '../utils/db.js';
 import Hero from '../components/Hero.astro';
 import SkillSection from '../components/SkillSection.astro';
 
-// Query data
-let basic_info = null;
-let skills = [];
-let resume = [];
-
-if (db) {
-	try {
-		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
-		const user_filter = basic_info ? basic_info.id : 1;
-		skills = db.prepare('SELECT * FROM skills WHERE fk_user = ?').all(user_filter);
-        resume = db.prepare('SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1').all(user_filter);
-	} catch (error) {
-		console.error('Database query failed. Ensure profile.db has the correct schema.', error.message);
-	}
-}
+const { basic_info, skills, resume } = getData({
+	skills: 'SELECT * FROM skills WHERE fk_user = ?',
+	resume: 'SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1',
+});
 
 // Helper to arrange skills
 const arranged_skills = {};
@@ -87,25 +76,8 @@ const resume_path = resume.length > 0 ? resume[0].file_path : '';
 </BaseLayout>
 
 <style>
-    .page-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4rem;
-    }
-
     .section-block {
         scroll-margin-top: 100px; /* offset for fixed navbar */
-    }
-
-    .section-title {
-        font-size: 2.25rem;
-        margin-bottom: 2rem;
-        font-weight: 800;
-        display: inline-block;
-        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
     }
 
     .resume-wrapper {

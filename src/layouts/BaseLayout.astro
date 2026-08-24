@@ -3,6 +3,7 @@ import { Image, getImage } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import Navbar from '../components/Navbar.astro';
+import { logoFitProps } from '../utils/logos';
 
 import profileLogoSrc from '../assets/logos/profile_logo.png';
 import linkedinSrc    from '../assets/logos/linkedin.png';
@@ -19,10 +20,6 @@ const { title, current_page = 'home' } = Astro.props;
 
 // Generate an optimised 64×64 favicon at build time from the PNG source
 const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, format: 'png' });
-
-// Proportionally scale any logo to fit inside a square box — no name lists needed.
-const logoFitProps = (meta: ImageMetadata, box: number) =>
-    meta.width >= meta.height ? { width: box } : { height: box };
 ---
 
 <!DOCTYPE html>
@@ -161,7 +158,13 @@ const logoFitProps = (meta: ImageMetadata, box: number) =>
             if (toggle) toggle.checked = isDark;
         });
 
-        // Reattach event listeners on every page load (initial + after view transitions)
+        // Reattach event listeners on every page load (initial + after view transitions).
+        // darkModeToggle/scrollBtn can persist across view-transition DOM morphs, so the
+        // window/document-scoped listeners below are named and removed before re-adding
+        // to avoid stacking up one more listener per navigation.
+        let toggleChangeHandler = null;
+        let checkScrollHandler = null;
+
         document.addEventListener('astro:page-load', () => {
             const darkModeToggle = document.getElementById("dark-mode-toggle");
             const body = document.body;
@@ -170,7 +173,10 @@ const logoFitProps = (meta: ImageMetadata, box: number) =>
             if (darkModeToggle) {
                 darkModeToggle.checked = body.classList.contains("dark-mode");
 
-                darkModeToggle.addEventListener("change", (e) => {
+                if (toggleChangeHandler) {
+                    darkModeToggle.removeEventListener("change", toggleChangeHandler);
+                }
+                toggleChangeHandler = (e) => {
                     if (e.target.checked) {
                         body.classList.add("dark-mode");
                         localStorage.setItem("darkMode", "enabled");
@@ -178,21 +184,25 @@ const logoFitProps = (meta: ImageMetadata, box: number) =>
                         body.classList.remove("dark-mode");
                         localStorage.setItem("darkMode", "disabled");
                     }
-                });
+                };
+                darkModeToggle.addEventListener("change", toggleChangeHandler);
             }
 
             // Scroll to Top Logic
             const scrollBtn = document.getElementById('scroll-to-top');
             if (scrollBtn) {
-                const checkScroll = () => {
+                if (checkScrollHandler) {
+                    window.removeEventListener('scroll', checkScrollHandler);
+                }
+                checkScrollHandler = () => {
                     if (window.scrollY > 300) {
                         scrollBtn.classList.add('visible');
                     } else {
                         scrollBtn.classList.remove('visible');
                     }
                 };
-                window.addEventListener('scroll', checkScroll);
-                checkScroll(); // Initial evaluation
+                window.addEventListener('scroll', checkScrollHandler);
+                checkScrollHandler(); // Initial evaluation
 
                 scrollBtn.addEventListener('click', () => {
                     window.scrollTo({ top: 0, behavior: 'smooth' });

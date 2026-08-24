@@ -7,3 +7,7 @@ profile.db-*
 *.log
 
 AGENTS.md
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+IMPROVEMENT_SUGGESTION.md

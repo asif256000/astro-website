@@ -7,13 +7,13 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "check": "astro check",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
-    "@astrojs/cloudflare": "^13.1.8",
     "astro": "^6.1.5",
-    "better-sqlite3": "^12.6.2"
+    "better-sqlite3": "^13.0.3"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

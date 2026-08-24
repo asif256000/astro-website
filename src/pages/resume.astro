@@ -1,20 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import db from '../utils/db.js';
+import { getData } from '../utils/db.js';
 
-// Query data
-let basic_info = null;
-let resume = [];
-
-if (db) {
-	try {
-		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
-		const user_filter = basic_info ? basic_info.id : 1;
-		resume = db.prepare('SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1').all(user_filter);
-	} catch (error) {
-		console.error('Database query failed:', error.message);
-	}
-}
+const { basic_info, resume } = getData({
+	resume: 'SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1',
+});
 
 const resume_path = resume.length > 0 ? resume[0].file_path : '';
 ---
@@ -54,23 +44,6 @@ const resume_path = resume.length > 0 ? resume[0].file_path : '';
 </BaseLayout>
 
 <style>
-    .page-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4rem;
-    }
-
-    .section-title {
-        font-size: 2.25rem;
-        margin-bottom: 2rem;
-        font-weight: 800;
-        display: inline-block;
-        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
     .resume-desc {
         color: var(--text-secondary);
         font-size: 1.1rem;

@@ -1,47 +1,22 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
-import db from '../utils/db.js';
+import { getData } from '../utils/db.js';
+import { getLogo, logoFitProps } from '../utils/logos';
+import { formatDate, isFutureDate } from '../utils/format';
 import Card from '../components/Card.astro';
 import SkillSection from '../components/SkillSection.astro';
 
-// Build-time logo map: Astro optimises every PNG in src/assets/logos/
-const logoMap = import.meta.glob<{ default: ImageMetadata }>('../assets/logos/*.png', { eager: true });
-const getLogo = (name: string): ImageMetadata | null =>
-    logoMap[`../assets/logos/${name}.png`]?.default ?? null;
-
-// Proportionally scale any logo to fit inside a square box.
-const logoFitProps = (meta: ImageMetadata, box: number) =>
-    meta.width >= meta.height ? { width: box } : { height: box };
-
-// Query data
-let basic_info = null;
-let education = [];
-let experience = [];
-let skills = [];
-let projects = [];
-let certifications = [];
-let honors_and_awards = [];
-let interests = [];
-let resume = [];
-
-if (db) {
-	try {
-		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
-		const user_filter = basic_info ? basic_info.id : 1;
-
-		education = db.prepare('SELECT * FROM education WHERE fk_user = ?').all(user_filter);
-		experience = db.prepare('SELECT * FROM experience WHERE fk_user = ?').all(user_filter);
-		skills = db.prepare('SELECT * FROM skills WHERE fk_user = ?').all(user_filter);
-		projects = db.prepare('SELECT * FROM projects WHERE fk_user = ?').all(user_filter);
-		certifications = db.prepare('SELECT * FROM certifications WHERE fk_user = ?').all(user_filter);
-		honors_and_awards = db.prepare('SELECT * FROM honors_and_awards WHERE fk_user = ?').all(user_filter);
-		interests = db.prepare('SELECT * FROM interests WHERE fk_user = ?').all(user_filter);
-		resume = db.prepare('SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1').all(user_filter);
-	} catch (error) {
-		console.error('Database query failed:', error.message);
-	}
-}
+const { basic_info, education, experience, skills, projects, certifications, honors_and_awards, interests, resume } = getData({
+	education: 'SELECT * FROM education WHERE fk_user = ?',
+	experience: 'SELECT * FROM experience WHERE fk_user = ?',
+	skills: 'SELECT * FROM skills WHERE fk_user = ?',
+	projects: 'SELECT * FROM projects WHERE fk_user = ?',
+	certifications: 'SELECT * FROM certifications WHERE fk_user = ?',
+	honors_and_awards: 'SELECT * FROM honors_and_awards WHERE fk_user = ?',
+	interests: 'SELECT * FROM interests WHERE fk_user = ?',
+	resume: 'SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1',
+});
 
 // Helpers
 const arrangeSkills = (all) => {
@@ -66,26 +41,6 @@ const arrangeInterests = (all) => {
 const arranged_skills = arrangeSkills(skills);
 const arranged_interests = arrangeInterests(interests);
 
-const formatDate = (dateString, format = 'YYYY-MM') => {
-    if (!dateString) return '';
-    const d = new Date(dateString);
-    if (isNaN(d)) return dateString;
-    const year = d.getUTCFullYear();
-    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const bMonth = d.toLocaleString('default', { month: 'short' });
-    
-    if (format === 'YYYY-MM') return `${year}-${month}`;
-    if (format === 'YYYY-MMM') return `${year}-${bMonth}`;
-    return `${year}-${month}`;
-};
-
-const isFutureDate = (dateString) => {
-    if (!dateString) return false;
-    const d = new Date(dateString);
-    return !isNaN(d) && d > new Date();
-};
-
-const curr_date = new Date().toISOString().slice(0, 7);
 const resume_path = resume.length > 0 ? resume[0].file_path : '';
 
 // Merge and sort timeline events descending by date
@@ -232,23 +187,6 @@ const timeline_events = [
 </BaseLayout>
 
 <style>
-    .page-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4rem;
-    }
-
-    .section-title {
-        font-size: 2.25rem;
-        margin-bottom: 2rem;
-        font-weight: 800;
-        display: inline-block;
-        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
     .grid-list {
         display: grid;
         grid-template-columns: 1fr;
