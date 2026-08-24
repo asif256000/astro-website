@@ -3,6 +3,7 @@ import { Image, getImage } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import Navbar from '../components/Navbar.astro';
+import { logoFitProps } from '../utils/logos';
 
 import profileLogoSrc from '../assets/logos/profile_logo.png';
 import linkedinSrc    from '../assets/logos/linkedin.png';
@@ -19,10 +20,6 @@ const { title, current_page = 'home' } = Astro.props;
 
 // Generate an optimised 64×64 favicon at build time from the PNG source
 const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, format: 'png' });
-
-// Proportionally scale any logo to fit inside a square box — no name lists needed.
-const logoFitProps = (meta: ImageMetadata, box: number) =>
-    meta.width >= meta.height ? { width: box } : { height: box };
 ---
 
 <!DOCTYPE html>

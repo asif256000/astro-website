@@ -1,41 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import db from '../utils/db.js';
+import { getData } from '../utils/db.js';
 import Card from '../components/Card.astro';
+import { formatDate as formatDateShared, isFutureDate } from '../utils/format';
 
-// Query data
-let basic_info = null;
-let projects = [];
-let certifications = [];
+const { basic_info, projects, certifications } = getData({
+	projects: 'SELECT * FROM projects WHERE fk_user = ?',
+	certifications: 'SELECT * FROM certifications WHERE fk_user = ?',
+});
 
-if (db) {
-	try {
-		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
-		const user_filter = basic_info ? basic_info.id : 1;
-
-		projects = db.prepare('SELECT * FROM projects WHERE fk_user = ?').all(user_filter);
-		certifications = db.prepare('SELECT * FROM certifications WHERE fk_user = ?').all(user_filter);
-	} catch (error) {
-		console.error('Database query failed:', error.message);
-	}
-}
-
-const formatDate = (dateString, format = 'YYYY-MM-DD') => {
-    if (!dateString) return '';
-    const d = new Date(dateString);
-    if (isNaN(d)) return dateString;
-    const year = d.getUTCFullYear();
-    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(d.getUTCDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
-};
-
-const isFutureDate = (dateString) => {
-    if (!dateString) return false;
-    const d = new Date(dateString);
-    return !isNaN(d) && d > new Date();
-};
+const formatDate = (dateString) => formatDateShared(dateString, 'YYYY-MM-DD');
 ---
 
 <BaseLayout 
@@ -78,23 +52,6 @@ const isFutureDate = (dateString) => {
 </BaseLayout>
 
 <style>
-    .page-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4rem;
-    }
-
-    .section-title {
-        font-size: 2.25rem;
-        margin-bottom: 2rem;
-        font-weight: 800;
-        display: inline-block;
-        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
     .card-grid {
         display: grid;
         grid-template-columns: 1fr;
