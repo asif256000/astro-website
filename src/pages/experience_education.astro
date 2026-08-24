@@ -1,35 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
-import db from '../utils/db.js';
+import { getData } from '../utils/db.js';
+import { getLogo, logoFitProps } from '../utils/logos';
+import { formatDate as formatDateShared, isFutureDate } from '../utils/format';
 
-// Build-time logo map: Astro optimises every PNG in src/assets/logos/
-const logoMap = import.meta.glob<{ default: ImageMetadata }>('../assets/logos/*.png', { eager: true });
-const getLogo = (name: string): ImageMetadata | null =>
-    logoMap[`../assets/logos/${name}.png`]?.default ?? null;
-
-// Proportionally scale any logo to fit inside a square box.
-// Constrains the LARGER dimension so the image fills the box without distortion,
-// regardless of whether it's landscape, portrait, or square.
-const logoFitProps = (meta: ImageMetadata, box: number) =>
-    meta.width >= meta.height ? { width: box } : { height: box };
-
-// Query data
-let basic_info = null;
-let education = [];
-let experience = [];
-
-if (db) {
-	try {
-		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
-		const user_filter = basic_info ? basic_info.id : 1;
-
-		education = db.prepare('SELECT * FROM education WHERE fk_user = ?').all(user_filter);
-		experience = db.prepare('SELECT * FROM experience WHERE fk_user = ?').all(user_filter);
-	} catch (error) {
-		console.error('Database query failed:', error.message);
-	}
-}
+const { basic_info, education, experience } = getData({
+	education: 'SELECT * FROM education WHERE fk_user = ?',
+	experience: 'SELECT * FROM experience WHERE fk_user = ?',
+});
 
 // Sort descending by duration_start
 experience.sort((a, b) => new Date(b.duration_start) - new Date(a.duration_start));
@@ -37,15 +16,8 @@ education.sort((a, b) => new Date(b.duration_start) - new Date(a.duration_start)
 
 const curr_date = new Date().toISOString().slice(0, 10);
 
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const d = new Date(dateString);
-    if (isNaN(d)) return dateString;
-    const year = d.getUTCFullYear();
-    const month = d.toLocaleString('default', { month: 'short' });
-    const day = String(d.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
+// This page always renders dates as YYYY-Mon-DD, unlike the other pages.
+const formatDate = (dateString) => formatDateShared(dateString, 'YYYY-Mon-DD');
 
 // SQLite returns JSON columns as strings.
 const safeParseJSON = (str) => {
@@ -55,12 +27,6 @@ const safeParseJSON = (str) => {
     } catch {
         return null;
     }
-};
-
-const isFutureDate = (dateString) => {
-    if (!dateString) return false;
-    const d = new Date(dateString);
-    return !isNaN(d) && d > new Date();
 };
 ---
 
@@ -82,7 +48,7 @@ const isFutureDate = (dateString) => {
                         <div class="detail-card glass-panel">
                             <div class="card-header-flex">
                                 <div class="logo-box">
-                                    <a href={exp.company_link} class="image-link" target="_blank">
+                                    <a href={exp.company_link} class="image-link" target="_blank" rel="noopener">
                                         {(() => {
                                             const s = getLogo(exp.company_logo);
                                             return s && <Image src={s} alt={exp.company} {...logoFitProps(s, 80)} />;
@@ -107,12 +73,18 @@ const isFutureDate = (dateString) => {
                             <div class="highlights-box">
                                 <strong>Highlights:</strong>
                                 <ul class="highlights-list">
-                                    {(Array.isArray(parsedDesc) ? parsedDesc : Object.entries(parsedDesc)).map(([resp_head, resp_desc]) => (
-                                        <li><b>{resp_head}:</b> {resp_desc}</li>
-                                    ))}
+                                    {(Array.isArray(parsedDesc) ? parsedDesc : Object.entries(parsedDesc)).map((entry) => {
+                                        // Each entry is normally a [head, desc] pair (either from Object.entries,
+                                        // or stored directly that way). Guard against a plain string entry, which
+                                        // would otherwise destructure into its first two characters.
+                                        const [resp_head, resp_desc] = Array.isArray(entry) ? entry : [null, entry];
+                                        return (
+                                            <li>{resp_head ? <><b>{resp_head}:</b> {resp_desc}</> : resp_desc}</li>
+                                        );
+                                    })}
                                     {Object.keys(parsedLinks).length > 0 && (
                                         Object.entries(parsedLinks).map(([title, link]) => (
-                                            <li><b>{title}:</b> <a href={link} class="custom-link" target="_blank">{link}</a></li>
+                                            <li><b>{title}:</b> <a href={link} class="custom-link" target="_blank" rel="noopener">{link}</a></li>
                                         ))
                                     )}
                                 </ul>
@@ -133,7 +105,7 @@ const isFutureDate = (dateString) => {
                         <div class="detail-card glass-panel">
                             <div class="card-header-flex">
                                 <div class="logo-box">
-                                    <a href={edu.institution_link} class="image-link" target="_blank">
+                                    <a href={edu.institution_link} class="image-link" target="_blank" rel="noopener">
                                         {(() => {
                                             const s = getLogo(edu.institution_logo);
                                             return s && <Image src={s} alt={edu.institution} {...logoFitProps(s, 80)} />;
@@ -165,23 +137,6 @@ const isFutureDate = (dateString) => {
 </BaseLayout>
 
 <style>
-    .page-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4rem;
-    }
-
-    .section-title {
-        font-size: 2.25rem;
-        margin-bottom: 2rem;
-        font-weight: 800;
-        display: inline-block;
-        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
     .list-container {
         display: flex;
         flex-direction: column;

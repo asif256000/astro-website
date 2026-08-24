@@ -1,25 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import db from '../utils/db.js';
+import { getData } from '../utils/db.js';
 import Card from '../components/Card.astro';
 import { getImage } from 'astro:assets';
 
-// Query data
-let basic_info = null;
-let honors_and_awards = [];
-let interests = [];
-
-if (db) {
-	try {
-		basic_info = db.prepare('SELECT * FROM basic_info WHERE id = 1').get();
-		const user_filter = basic_info ? basic_info.id : 1;
-
-		honors_and_awards = db.prepare('SELECT * FROM honors_and_awards WHERE fk_user = ?').all(user_filter);
-		interests = db.prepare('SELECT * FROM interests WHERE fk_user = ?').all(user_filter);
-	} catch (error) {
-		console.error('Database query failed:', error.message);
-	}
-}
+const { basic_info, honors_and_awards, interests } = getData({
+	honors_and_awards: 'SELECT * FROM honors_and_awards WHERE fk_user = ?',
+	interests: 'SELECT * FROM interests WHERE fk_user = ?',
+});
 
 // Helper to sort interests
 const arrangeInterests = (all) => {
@@ -302,12 +290,19 @@ const hasGallery = galleryItems.length > 0;
     // Clicking the dimmed backdrop (not the card itself) closes the lightbox
     document.getElementById('lightboxBackdrop')?.addEventListener('click', closeLightbox);
 
-    document.addEventListener('keydown', (e) => {
+    // This script is inline (define:vars) and re-executes every time this page is
+    // navigated to, so the document-scoped listeners below are stashed on `window`
+    // and removed before re-adding to avoid stacking one more per visit.
+    if (window.__awardsKeydownHandler) {
+        document.removeEventListener('keydown', window.__awardsKeydownHandler);
+    }
+    window.__awardsKeydownHandler = (e) => {
         if (!lightbox?.classList.contains('active')) return;
         if (e.key === 'Escape')      closeLightbox();
         else if (e.key === 'ArrowRight') goNext();
         else if (e.key === 'ArrowLeft')  goPrev();
-    });
+    };
+    document.addEventListener('keydown', window.__awardsKeydownHandler);
 
     // Touch swipe support
     let touchStartX = 0;
@@ -316,7 +311,13 @@ const hasGallery = galleryItems.length > 0;
     // After page load: read each video's actual dimensions and apply the correct
     // aspect-ratio to its tile, then start playback.
     // preload="metadata" means only the tiny video header is fetched (not the content).
-    document.addEventListener('astro:page-load', () => {
+    // This whole script re-executes every visit to this page, so this subscription
+    // is stashed on `window` and removed before re-adding to avoid one more
+    // 'astro:page-load' subscription (and IntersectionObserver) per visit.
+    if (window.__awardsPageLoadHandler) {
+        document.removeEventListener('astro:page-load', window.__awardsPageLoadHandler);
+    }
+    window.__awardsPageLoadHandler = () => {
         document.querySelectorAll('.tile-video').forEach((vid) => {
             const tile = vid.closest('.gallery-tile');
 
@@ -359,7 +360,8 @@ const hasGallery = galleryItems.length > 0;
         }, { threshold: 0.05 });
 
         tiles.forEach((tile) => observer.observe(tile));
-    });
+    };
+    document.addEventListener('astro:page-load', window.__awardsPageLoadHandler);
     lightbox?.addEventListener('touchend', (e) => {
         const dx = e.changedTouches[0].clientX - touchStartX;
         if (Math.abs(dx) > 50) { dx < 0 ? goNext() : goPrev(); }
@@ -369,22 +371,6 @@ const hasGallery = galleryItems.length > 0;
 
 <style>
     /* ── Page Layout ─────────────────────────────────────────────── */
-    .page-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4rem;
-    }
-
-    .section-title {
-        font-size: 2.25rem;
-        margin-bottom: 2rem;
-        font-weight: 800;
-        display: inline-block;
-        background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
 
     .card-grid {
         display: grid;

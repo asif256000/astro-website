@@ -66,10 +66,15 @@ const currentLabel = currentNavItem.label;
 </header>
 
 <script>
+  // btn/nav can persist across view-transition DOM morphs, so the document-scoped
+  // outside-click listener is named and removed before re-adding to avoid stacking
+  // up one more listener per navigation.
+  let outsideClickHandler: ((e: MouseEvent) => void) | null = null;
+
   document.addEventListener('astro:page-load', () => {
     const btn = document.getElementById('mobile-menu-btn');
     const nav = document.querySelector('.nav-links');
-    
+
     if (btn && nav) {
       // Toggle menu on button click
       btn.addEventListener('click', (e) => {
@@ -79,7 +84,10 @@ const currentLabel = currentNavItem.label;
       });
 
       // Close menu when clicking outside
-      document.addEventListener('click', (e) => {
+      if (outsideClickHandler) {
+        document.removeEventListener('click', outsideClickHandler);
+      }
+      outsideClickHandler = (e) => {
         if (nav.classList.contains('show')) {
           // If the click is NOT inside the nav container
           if (!nav.contains(e.target as Node)) {
@@ -87,7 +95,8 @@ const currentLabel = currentNavItem.label;
             btn.classList.remove('open');
           }
         }
-      });
+      };
+      document.addEventListener('click', outsideClickHandler);
     }
   });
 </script>
