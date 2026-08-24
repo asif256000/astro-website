@@ -85,7 +85,6 @@ const isFutureDate = (dateString) => {
     return !isNaN(d) && d > new Date();
 };
 
-const curr_date = new Date().toISOString().slice(0, 7);
 const resume_path = resume.length > 0 ? resume[0].file_path : '';
 
 // Merge and sort timeline events descending by date
