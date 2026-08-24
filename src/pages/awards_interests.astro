@@ -302,12 +302,19 @@ const hasGallery = galleryItems.length > 0;
     // Clicking the dimmed backdrop (not the card itself) closes the lightbox
     document.getElementById('lightboxBackdrop')?.addEventListener('click', closeLightbox);
 
-    document.addEventListener('keydown', (e) => {
+    // This script is inline (define:vars) and re-executes every time this page is
+    // navigated to, so the document-scoped listeners below are stashed on `window`
+    // and removed before re-adding to avoid stacking one more per visit.
+    if (window.__awardsKeydownHandler) {
+        document.removeEventListener('keydown', window.__awardsKeydownHandler);
+    }
+    window.__awardsKeydownHandler = (e) => {
         if (!lightbox?.classList.contains('active')) return;
         if (e.key === 'Escape')      closeLightbox();
         else if (e.key === 'ArrowRight') goNext();
         else if (e.key === 'ArrowLeft')  goPrev();
-    });
+    };
+    document.addEventListener('keydown', window.__awardsKeydownHandler);
 
     // Touch swipe support
     let touchStartX = 0;
@@ -316,7 +323,13 @@ const hasGallery = galleryItems.length > 0;
     // After page load: read each video's actual dimensions and apply the correct
     // aspect-ratio to its tile, then start playback.
     // preload="metadata" means only the tiny video header is fetched (not the content).
-    document.addEventListener('astro:page-load', () => {
+    // This whole script re-executes every visit to this page, so this subscription
+    // is stashed on `window` and removed before re-adding to avoid one more
+    // 'astro:page-load' subscription (and IntersectionObserver) per visit.
+    if (window.__awardsPageLoadHandler) {
+        document.removeEventListener('astro:page-load', window.__awardsPageLoadHandler);
+    }
+    window.__awardsPageLoadHandler = () => {
         document.querySelectorAll('.tile-video').forEach((vid) => {
             const tile = vid.closest('.gallery-tile');
 
@@ -359,7 +372,8 @@ const hasGallery = galleryItems.length > 0;
         }, { threshold: 0.05 });
 
         tiles.forEach((tile) => observer.observe(tile));
-    });
+    };
+    document.addEventListener('astro:page-load', window.__awardsPageLoadHandler);
     lightbox?.addEventListener('touchend', (e) => {
         const dx = e.changedTouches[0].clientX - touchStartX;
         if (Math.abs(dx) > 50) { dx < 0 ? goNext() : goPrev(); }
