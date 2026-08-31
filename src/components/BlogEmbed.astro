@@ -1,0 +1,226 @@
+---
+// Embeds the (separately-hosted, low-priority) blog as an iframe and keeps
+// it in sync with the site's own dark/light theme via a `?theme=` query
+// param, per the blog's documented convention.
+interface Props {
+  src: string;
+  title?: string;
+  height?: string;
+  desktopHeight?: string;
+}
+const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.props;
+---
+
+<!--
+  The blog is cross-origin, so we can't reach into its history object
+  directly (contentWindow.history throws SecurityError cross-origin).
+  These post a message into the frame instead; the blog needs a small
+  listener on its side to act on it (see the script comment below for the
+  exact snippet).
+
+  Back/forward are overlaid on the iframe's left/right edges, each
+  positioned independently (not sharing one wrapper element) — an earlier
+  version grouped both into a single absolutely-positioned flex container
+  and that combination collapsed the two buttons on top of each other as
+  soon as the iframe was clicked.
+-->
+<div class="blog-embed-container" style={`--blog-embed-height: ${height}; --blog-embed-desktop-height: ${desktopHeight};`}>
+  <iframe
+    id="blog-embed-frame"
+    class="blog-embed-frame"
+    data-base-src={src}
+    title={title}
+    loading="lazy"
+  ></iframe>
+  <button
+    type="button"
+    id="blog-embed-back"
+    class="blog-embed-nav blog-embed-nav-back"
+    title="Back one page in the blog"
+    aria-label="Back one page in the blog"
+  >‹</button>
+  <button
+    type="button"
+    id="blog-embed-forward"
+    class="blog-embed-nav blog-embed-nav-forward"
+    title="Forward one page in the blog"
+    aria-label="Forward one page in the blog"
+  >›</button>
+</div>
+
+<script>
+  // Reads the site's current theme off `body.dark-mode` (set by BaseLayout's
+  // dark-mode script) and appends it to the iframe's base URL as `?theme=`,
+  // preserving any query params the base URL already has. A MutationObserver
+  // on body's class list catches both the toggle click and the class
+  // re-application that happens after Astro view-transition swaps, and
+  // re-points (reloads) the iframe whenever the theme actually changes.
+  function currentTheme() {
+    return document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+  }
+
+  function themedUrl(baseSrc: string, theme: string) {
+    const url = new URL(baseSrc, window.location.origin);
+    url.searchParams.set('theme', theme);
+    return url.toString();
+  }
+
+  function syncFrame(frame: HTMLIFrameElement) {
+    const baseSrc = frame.dataset.baseSrc;
+    if (!baseSrc) return;
+    const themed = themedUrl(baseSrc, currentTheme());
+    if (frame.getAttribute('src') !== themed) {
+      frame.setAttribute('src', themed);
+    }
+  }
+
+  let observer: MutationObserver | null = null;
+
+  // Cross-origin iframes can't be reached via contentWindow.history (that
+  // getter throws SecurityError off-origin), so "back"/"forward" are sent as
+  // postMessage requests instead. The blog needs a matching listener to act
+  // on them.
+  //
+  // IMPORTANT — do NOT implement that listener by calling the iframe's own
+  // history.back()/forward(). An iframe doesn't have an isolated history
+  // stack: its navigations land in the tab's single *joint* session
+  // history alongside the top-level page's own entries. Once the iframe's
+  // own local entries run out, a further history.back() call inside it
+  // falls through and starts navigating the *outer* site backward (and can
+  // leave the outer page's own client-side router in a stale, half-applied
+  // state when you return — e.g. these buttons appearing misplaced).
+  // Confirmed live: clicking "back" repeatedly eventually drove the whole
+  // site backward, not just the blog.
+  //
+  // Track the blog's own visited-page stack instead, and never touch the
+  // browser's real history for it — e.g.:
+  //
+  //   (function () {
+  //     const KEY = 'blog-nav-stack';
+  //     const read = () => JSON.parse(sessionStorage.getItem(KEY) || '{"stack":[],"ptr":-1}');
+  //     const write = (s) => sessionStorage.setItem(KEY, JSON.stringify(s));
+  //     const here = location.pathname + location.search;
+  //
+  //     let { stack, ptr } = read();
+  //     if (stack[ptr] !== here) {
+  //       stack = stack.slice(0, ptr + 1).concat(here); // drop any stale "forward" branch
+  //       ptr = stack.length - 1;
+  //       write({ stack, ptr });
+  //     }
+  //
+  //     window.addEventListener('message', (event) => {
+  //       const allowed = ['https://asifiqbal.xyz', 'http://localhost:4321'];
+  //       if (!allowed.includes(event.origin)) return;
+  //       if (event.data?.type !== 'blog-nav') return;
+  //
+  //       let { stack, ptr } = read();
+  //       if (event.data.action === 'back' && ptr > 0) ptr--;
+  //       else if (event.data.action === 'forward' && ptr < stack.length - 1) ptr++;
+  //       else return; // at the edge of our own stack — no-op, never fall through
+  //
+  //       write({ stack, ptr });
+  //       location.assign(stack[ptr]);
+  //     });
+  //   })();
+  //
+  // Without a listener at all the buttons render but do nothing.
+  function postNav(frame: HTMLIFrameElement, action: 'back' | 'forward') {
+    const baseSrc = frame.dataset.baseSrc;
+    if (!baseSrc || !frame.contentWindow) return;
+    const targetOrigin = new URL(baseSrc, window.location.origin).origin;
+    frame.contentWindow.postMessage({ type: 'blog-nav', action }, targetOrigin);
+  }
+
+  let backClickHandler: (() => void) | null = null;
+  let forwardClickHandler: (() => void) | null = null;
+
+  function initBlogFrame() {
+    const frame = document.getElementById('blog-embed-frame') as HTMLIFrameElement | null;
+    if (!frame) return;
+
+    syncFrame(frame);
+
+    if (observer) observer.disconnect();
+    observer = new MutationObserver(() => syncFrame(frame));
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    const backBtn = document.getElementById('blog-embed-back');
+    const forwardBtn = document.getElementById('blog-embed-forward');
+
+    if (backBtn) {
+      if (backClickHandler) backBtn.removeEventListener('click', backClickHandler);
+      backClickHandler = () => postNav(frame, 'back');
+      backBtn.addEventListener('click', backClickHandler);
+    }
+
+    if (forwardBtn) {
+      if (forwardClickHandler) forwardBtn.removeEventListener('click', forwardClickHandler);
+      forwardClickHandler = () => postNav(frame, 'forward');
+      forwardBtn.addEventListener('click', forwardClickHandler);
+    }
+  }
+
+  document.addEventListener('astro:page-load', initBlogFrame);
+</script>
+
+<style>
+  .blog-embed-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .blog-embed-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.85;
+  }
+
+  .blog-embed-nav:hover {
+    transform: translateY(-50%) scale(1.08);
+    opacity: 1;
+  }
+
+  .blog-embed-nav-back {
+    left: 0.75rem;
+  }
+
+  .blog-embed-nav-forward {
+    right: 0.75rem;
+  }
+
+  .blog-embed-frame {
+    display: block;
+    width: 100%;
+    height: var(--blog-embed-height);
+    border: none;
+  }
+
+  /* Matches the nav's own mobile/desktop breakpoint (Navbar.astro) — give the
+     blog more room to breathe once there's a laptop-sized viewport to use. */
+  @media (min-width: 900px) {
+    .blog-embed-frame {
+      height: var(--blog-embed-desktop-height);
+    }
+  }
+</style>
