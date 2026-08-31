@@ -79,15 +79,12 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
                 <a href="https://www.linkedin.com/in/asif-iqbal-r" target="_blank" class="footer-logo-box">
                     <Image src={linkedinSrc} alt="LinkedIn" {...logoFitProps(linkedinSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
-                &nbsp;&nbsp;&nbsp;
                 <a href="https://github.com/asif256000" target="_blank" class="footer-logo-box">
                     <Image src={githubSrc} alt="GitHub" {...logoFitProps(githubSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
-                &nbsp;&nbsp;&nbsp;
                 <a href="https://scholar.google.com/citations?hl=en&user=EImUgsAAAAAJ" target="_blank" class="footer-logo-box">
                     <Image src={gscholarSrc} alt="GoogleScholar" {...logoFitProps(gscholarSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
-                &nbsp;&nbsp;&nbsp;
                 <a href="https://orcid.org/0009-0008-8317-8133" target="_blank" class="footer-logo-box">
                     <Image src={orcidSrc} alt="ORCID" {...logoFitProps(orcidSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
@@ -224,8 +221,22 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
         .social-media-links {
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
             gap: 1.5rem;
             margin-top: 1rem;
+        }
+
+        /* Narrow (phone) screens: tighter gap/padding so the logo row fits
+           inside the footer instead of spilling past its rounded edge.
+           flex-wrap above is a safety net if it still doesn't fit. */
+        @media (max-width: 480px) {
+            footer {
+                padding: 1.5rem 1rem;
+            }
+
+            .social-media-links {
+                gap: 1rem;
+            }
         }
 
         .logo {

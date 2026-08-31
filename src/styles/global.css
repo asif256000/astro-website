@@ -226,6 +226,21 @@ hr {
   object-fit: fill;
 }
 
+/* Shrink footer logos on narrow (phone) screens so the row fits inside the
+   footer's padding instead of spilling past its rounded edge. */
+@media (max-width: 480px) {
+  .footer-logo-box {
+    width: 36px;
+    height: 36px;
+  }
+
+  .footer-logo-box img {
+    max-width: 36px;
+    max-height: 36px;
+    min-height: 22px;
+  }
+}
+
 /* Shared page-body layout, used identically across every page */
 .page-content {
   display: flex;
