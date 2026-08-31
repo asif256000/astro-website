@@ -6,8 +6,6 @@ dist/
 profile.db-*
 *.log
 
-AGENTS.md
-CLAUDE.md
-CLAUDE.local.md
+*.local.md
 .claude/
-IMPROVEMENT_SUGGESTION.md
+*_SUGGESTION.md
