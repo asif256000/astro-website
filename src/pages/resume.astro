@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import BlogEmbed from '../components/BlogEmbed.astro';
 import { getData } from '../utils/db.js';
 
 const { basic_info, resume } = getData({
@@ -7,10 +8,12 @@ const { basic_info, resume } = getData({
 });
 
 const resume_path = resume.length > 0 ? resume[0].file_path : '';
+
+const BLOG_URL = 'https://blog.perch-iguana.ts.net';
 ---
 
-<BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Resume` : "Resume"}
+<BaseLayout
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Resume & Blog` : "Resume & Blog"}
     current_page="resume"
 >
     <!-- Heading handled by Navbar -->
@@ -39,6 +42,16 @@ const resume_path = resume.length > 0 ? resume[0].file_path : '';
                     </object>
                 </div>
             )}
+        </section>
+
+        <section id="blog" class="glass-panel" style="padding: 2rem; margin-top: 2rem;">
+            <h2 class="section-title" style="margin-bottom: 1rem;">Blog</h2>
+            <p class="resume-desc">
+                Occasional write-ups and notes, hosted separately from the rest of this site.
+            </p>
+            <div style="margin-top: 1.5rem;">
+                <BlogEmbed src={BLOG_URL} title="Blog" height="700px" desktopHeight="1000px" />
+            </div>
         </section>
     </div>
 </BaseLayout>
