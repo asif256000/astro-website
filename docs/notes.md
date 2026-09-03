@@ -41,17 +41,17 @@ writing); if Google rotates the file the preload just silently misses, no
 breakage.
 
 **Fonts turned out to be unrelated to the site's CLS problem** — noted here
-because it took four rounds of "fixed that" to actually establish it, in
-case the same red herring shows up again. `font-display` only governs
-behavior *after* a `@font-face` is registered, so the theory was that
-deferring the stylesheet (no `@font-face` yet at first paint) forced a
-swap+reflow once it did load, regardless of `display` value. Ruled out by
-elimination, each verified against a real PageSpeed mobile run (Slow 4G) —
-not local builds, which never showed the shift at all: preload alone (CLS
-unchanged), `swap`→`optional` (unchanged), and finally making the
-stylesheet fully render-blocking so `@font-face` registers before first
-paint (unchanged — and cost ~1500ms of render-blocking time under
-throttling for nothing, reverted). The actual cause was
+because it took three separate deploys to actually establish that, in case
+the same red herring shows up again. `font-display` only governs behavior
+*after* a `@font-face` is registered, so the theory was that deferring the
+stylesheet (no `@font-face` yet at first paint) forced a swap+reflow once
+it did load, regardless of `display` value. Ruled out by elimination, each
+verified against a real PageSpeed mobile run (Slow 4G) — not local builds,
+which never showed the shift at all: preload alone (CLS unchanged),
+`swap`→`optional` (unchanged), and finally making the stylesheet fully
+render-blocking so `@font-face` registers before first paint (still
+unchanged — and cost ~1500ms of render-blocking time under throttling for
+nothing, reverted). The actual cause, found on the fourth attempt, was
 `Hero.astro`'s image loading `loading="lazy"` by Astro's `<Picture>`
 default despite being permanently above the fold — see below.
 
