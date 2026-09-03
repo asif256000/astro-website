@@ -36,16 +36,8 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
     <!-- Preload above-the-fold webfont files; see docs/notes.md#font-loading-baselayoutastro for why (+ the Cloudflare Fonts gotcha). -->
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2">
-    <!-- Non-blocking via media=print swap trick; display=optional (not swap) — see docs/notes.md#font-loading-baselayoutastro. -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional"
-      media="print"
-      onload="this.media='all'"
-    >
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional">
-    </noscript>
+    <!-- Deliberately render-blocking (~1KB gzip) — see docs/notes.md#font-loading-baselayoutastro for why the old media=print deferral defeated display=optional. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional">
     <ClientRouter />
     <slot name="head" />
 </head>

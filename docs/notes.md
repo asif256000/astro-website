@@ -31,26 +31,49 @@ in a local build, check these before re-debugging the app code:
 
 ## Font loading (`BaseLayout.astro`)
 
-Hero.astro's title (JetBrains Mono 700) and body text (Inter) are loaded via
-Google Fonts, `media="print"` + `onload` swap trick (non-blocking) plus a
-`<link rel="preload">` for the two specific woff2 files actually used above
-the fold — Inter serves all five requested weights off one variable-font
-file for the Latin subset, so a single preload covers the whole family.
+Hero.astro's title (JetBrains Mono 700) and body text (Inter) load via
+Google Fonts: a normal (render-blocking, ~1KB gzip) stylesheet link with
+`display=optional`, plus `<link rel="preload">` for the two specific woff2
+files actually used above the fold — Inter serves all five requested
+weights off one variable-font file for the Latin subset, so a single
+preload covers the whole family.
 
-`font-display` is `optional`, not `swap`. Preload alone wasn't enough:
-PageSpeed's mobile run throttles to Slow 4G, where even a preloaded font
-often hasn't finished downloading by the time the stylesheet activates —
-so with `swap` the browser still swapped fonts after first paint and
-reflowed the hero block (measured CLS 0.31+). `optional` makes this
-network-speed-independent: if the font isn't ready within its ~100ms
-budget, the browser commits to the fallback for that view and never swaps
-later. The real font still renders on any reasonably fast connection and on
-every cached repeat visit; only a genuinely slow, uncached first load ever
-sees the fallback (verified: `Courier New`, reads cleanly, fits the site's
-monospace aesthetic).
+The stylesheet link is deliberately **not** deferred via the old
+`media="print"` swap trick, even though that trick is the standard
+non-blocking-fonts pattern. Reasoning, arrived at the hard way (three
+rounds of "fixed" that PageSpeed's Slow-4G mobile run kept disproving):
+
+- `font-display` only governs behavior **after** a `@font-face` is
+  registered and the browser goes to paint text with it — how long to
+  hide text (`block`) or show the fallback (`swap`'s block period is 0)
+  while the font file is in flight, and for `optional`, whether to bother
+  swapping at all if the file isn't ready within ~100ms.
+- Deferring the *stylesheet itself* means no `@font-face` exists yet at
+  first paint, so text unconditionally renders in the CSS fallback
+  (`Courier New` / generic monospace) first — that part's fine and
+  intentional. But once the deferred stylesheet does load and registers
+  the real faces, applying them to already-painted text is a swap+reflow
+  regardless of `display` value, because the font, having been preloaded,
+  is already sitting there "loaded" by the time that registration happens.
+  `font-display` never got a chance to prevent anything — the swap it's
+  meant to gate had already been made inevitable by deferring the CSS.
+  Confirmed by process of elimination: preload alone didn't fix it (CLS
+  0.31+), `swap`→`optional` didn't change it either (still 0.31+, even
+  after removing an unrelated Cloudflare Fonts issue that was also making
+  things worse — see the gotchas section above), and the one variable left
+  was the deferred registration itself.
+- Making the stylesheet link load normally means `@font-face` is
+  registered before first paint, so if the (preloaded, fast) font file is
+  already available by then, text paints correctly the first time — no
+  swap, nothing to shift. `display=optional` is kept as the fallback for
+  when it genuinely isn't ready in time on a slow connection: the browser
+  commits to the fallback for that view instead of blocking or swapping
+  later.
 
 Font URLs are version-hashed by Google (`v20`/`v24` as of writing) — if
-Google rotates the file, the preload just silently misses with no breakage.
+Google rotates the file, the preload just silently misses with no breakage
+(the blocking stylesheet link still resolves the fonts correctly either
+way, just slightly slower without the head start).
 
 ## Blog iframe (`BlogEmbed.astro`)
 
