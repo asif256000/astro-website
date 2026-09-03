@@ -35,19 +35,32 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!--
       Preload the exact webfont files used above the fold (Hero.astro's
-      title + body text), so they're already in the cache by the time the
-      stylesheet below activates instead of swapping in after first paint —
-      that swap was reflowing the entire hero block (Lighthouse's Agentic
-      Browsing audit measured CLS 0.308, all of it attributed to this one
-      element). font-display stays 'swap' and the fonts are unchanged; this
-      just gets the bytes in earlier so the swap has nothing to visibly do.
+      title + body text), so they're in-flight as early as possible instead
+      of only starting once the deferred stylesheet below activates.
+
+      This alone turned out not to be enough: PageSpeed's mobile run
+      throttles to Slow 4G, where even a preloaded font often hasn't
+      finished downloading by the time the stylesheet flips to 'all' and
+      text needs a face — so the swap (and the reflow that came with it)
+      still happened, CLS 0.31+, all of it attributed to the hero block.
+      Preload narrows that window but can't beat the network on a slow
+      connection by itself; paired below with font-display: optional,
+      which makes the outcome network-speed-independent instead of just
+      "usually fast enough": if the font isn't ready within its ~100ms
+      budget, the browser commits to the fallback for that view and never
+      swaps later, so there's nothing left to shift regardless of how slow
+      the connection is. The font itself is unchanged — on any connection
+      fast enough (and on every repeat/cached visit) it still renders in
+      the real webfont; only a genuinely slow, uncached first load ever
+      sees the fallback instead.
 
       Inter serves all five requested weights (400–800) off this single
       variable-font file for the Latin subset, so one preload covers the
       whole family; JetBrains Mono 700 is its own file. Both URLs are
       version-hashed by Google Fonts (v20 / v24 as of writing) — if Google
       rotates the file, the preload just silently misses and the fonts
-      fall back to the normal swap-in path below, no breakage either way.
+      fall back to the normal (still 'optional') path below, no breakage
+      either way.
     -->
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2">
@@ -56,15 +69,16 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
       Loaded non-blocking via the media=print trick: the browser downloads
       the font CSS in parallel with rendering, then flips to 'all' on load.
       Space Grotesk removed — hero-title now uses JetBrains Mono.
+      display=optional (not swap) — see the preload comment above for why.
     -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional"
       media="print"
       onload="this.media='all'"
     >
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional">
     </noscript>
     <ClientRouter />
     <slot name="head" />
