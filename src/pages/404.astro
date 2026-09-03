@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getData } from '../utils/db.js';
+
+const { basic_info } = getData();
+---
+
+<BaseLayout
+    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile — Page Not Found` : "Page Not Found"}
+>
+    <div class="page-content">
+        <section class="not-found glass-panel">
+            <p class="not-found-code">404</p>
+            <h1 class="not-found-title">Page not found</h1>
+            <p class="not-found-desc">
+                The page you're looking for doesn't exist — it may have moved, or the link might be wrong.
+            </p>
+            <a href="/" class="btn primary">Back to Home</a>
+        </section>
+    </div>
+</BaseLayout>
+
+<style>
+    .not-found {
+        padding: 4rem 2rem;
+        margin-top: 2rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .not-found-code {
+        font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        margin: 0;
+        line-height: 1;
+    }
+
+    .not-found-title {
+        margin: 0;
+        font-size: 1.75rem;
+    }
+
+    .not-found-desc {
+        color: var(--text-secondary);
+        max-width: 480px;
+        margin: 0 0 1rem;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .primary {
+        background-color: var(--accent-color);
+        color: #fff;
+    }
+
+    .primary:hover {
+        background-color: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+</style>
