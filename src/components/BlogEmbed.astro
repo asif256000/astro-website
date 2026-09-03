@@ -11,19 +11,7 @@ interface Props {
 const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.props;
 ---
 
-<!--
-  The blog is cross-origin, so we can't reach into its history object
-  directly (contentWindow.history throws SecurityError cross-origin).
-  These post a message into the frame instead; the blog needs a small
-  listener on its side to act on it (see the script comment below for the
-  exact snippet).
-
-  Back/forward are overlaid on the iframe's left/right edges, each
-  positioned independently (not sharing one wrapper element) — an earlier
-  version grouped both into a single absolutely-positioned flex container
-  and that combination collapsed the two buttons on top of each other as
-  soon as the iframe was clicked.
--->
+<!-- Cross-origin blog embed; back/forward post messages into the frame (blog-side listener required — see docs/notes.md#blog-iframe-blogembedastro). Buttons are separately-positioned absolute elements, not a shared wrapper, to avoid them collapsing together on click. -->
 <div class="blog-embed-container" style={`--blog-embed-height: ${height}; --blog-embed-desktop-height: ${desktopHeight};`}>
   <iframe
     id="blog-embed-frame"
@@ -49,24 +37,16 @@ const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.
 </div>
 
 <script>
-  // Reads the site's current theme off `body.dark-mode` (set by BaseLayout's
-  // dark-mode script) and appends it to the iframe's base URL as `?theme=`,
-  // preserving any query params the base URL already has. A MutationObserver
-  // on body's class list catches both the toggle click and the class
-  // re-application that happens after Astro view-transition swaps, and
-  // re-points (reloads) the iframe whenever the theme actually changes.
+  // Theme comes from body.dark-mode; MutationObserver below reloads the
+  // iframe (with ?theme=) whenever it changes, incl. after view transitions.
   function currentTheme() {
     return document.body.classList.contains('dark-mode') ? 'dark' : 'light';
   }
 
-  // The blog's last-reported location (pathname + search, no `theme` param),
-  // via postMessage — see the required blog-side snippet below. Without it
-  // this stays null and every theme toggle falls back to the base src,
-  // which is exactly the "jumps back to the blog's homepage" bug: the
-  // iframe's own `src` attribute never reflects navigation that happens
-  // *inside* the frame (regular link clicks, or the back/forward buttons
-  // above, which navigate the frame from its own script via
-  // `location.assign`) — only the blog itself knows where it actually is.
+  // Blog's last-reported location, via postMessage (blog-side snippet
+  // required — see docs/notes.md#blog-iframe-blogembedastro). Without it,
+  // every theme toggle resets the embed to the blog's homepage instead of
+  // staying on the current page.
   let currentBlogPath: string | null = null;
 
   function themedUrl(baseSrc: string, theme: string) {
@@ -101,75 +81,13 @@ const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.
 
   let observer: MutationObserver | null = null;
 
-  // Cross-origin iframes can't be reached via contentWindow.history (that
-  // getter throws SecurityError off-origin), so "back"/"forward" are sent as
-  // postMessage requests instead. The blog needs a matching listener to act
-  // on them.
-  //
-  // IMPORTANT — do NOT implement that listener by calling the iframe's own
-  // history.back()/forward(). An iframe doesn't have an isolated history
-  // stack: its navigations land in the tab's single *joint* session
-  // history alongside the top-level page's own entries. Once the iframe's
-  // own local entries run out, a further history.back() call inside it
-  // falls through and starts navigating the *outer* site backward (and can
-  // leave the outer page's own client-side router in a stale, half-applied
-  // state when you return — e.g. these buttons appearing misplaced).
-  // Confirmed live: clicking "back" repeatedly eventually drove the whole
-  // site backward, not just the blog.
-  //
-  // Track the blog's own visited-page stack instead, and never touch the
-  // browser's real history for it — e.g.:
-  //
-  //   (function () {
-  //     const KEY = 'blog-nav-stack';
-  //     const read = () => JSON.parse(sessionStorage.getItem(KEY) || '{"stack":[],"ptr":-1}');
-  //     const write = (s) => sessionStorage.setItem(KEY, JSON.stringify(s));
-  //     const here = location.pathname + location.search;
-  //
-  //     let { stack, ptr } = read();
-  //     if (stack[ptr] !== here) {
-  //       stack = stack.slice(0, ptr + 1).concat(here); // drop any stale "forward" branch
-  //       ptr = stack.length - 1;
-  //       write({ stack, ptr });
-  //     }
-  //
-  //     window.addEventListener('message', (event) => {
-  //       const allowed = ['https://asifiqbal.xyz', 'http://localhost:4321'];
-  //       if (!allowed.includes(event.origin)) return;
-  //       if (event.data?.type !== 'blog-nav') return;
-  //
-  //       let { stack, ptr } = read();
-  //       if (event.data.action === 'back' && ptr > 0) ptr--;
-  //       else if (event.data.action === 'forward' && ptr < stack.length - 1) ptr++;
-  //       else return; // at the edge of our own stack — no-op, never fall through
-  //
-  //       write({ stack, ptr });
-  //       location.assign(stack[ptr]);
-  //     });
-  //   })();
-  //
-  // Without a listener at all the buttons render but do nothing.
-  //
-  // SECOND required piece — reporting current location back to the parent.
-  // The parent (this file) reloads the iframe's `src` from scratch on every
-  // theme toggle (see themedUrl/currentBlogPath above), since it has no
-  // other way to know where the iframe navigated to on its own (regular
-  // link clicks, or the back/forward buttons calling location.assign
-  // above) — the outer <iframe src> attribute only ever reflects what *we*
-  // last set it to, never the frame's actual current location. Without this
-  // piece, every theme toggle resets the embed back to the blog's homepage.
-  // Add this snippet (fires on every real page load, so it also covers
-  // navigation via the back/forward listener above):
-  //
-  //   (function () {
-  //     if (window.parent === window) return; // not framed, nothing to report
-  //     const url = new URL(location.href);
-  //     url.searchParams.delete('theme'); // parent manages this param itself
-  //     window.parent.postMessage(
-  //       { type: 'blog-nav-state', path: url.pathname + url.search },
-  //       '*' // payload is just our own path — not sensitive enough to need a fixed target origin
-  //     );
-  //   })();
+  // Back/forward: cross-origin means contentWindow.history is unreachable,
+  // so these postMessage into the frame — blog needs a matching listener
+  // (sessionStorage-based, NOT history.back()/forward() — an iframe shares
+  // the tab's joint history, so that falls through to navigating the outer
+  // site once the iframe's own entries run out, confirmed live). Full
+  // snippets for both required blog-side listeners are in
+  // docs/notes.md#blog-iframe-blogembedastro.
   function postNav(frame: HTMLIFrameElement, action: 'back' | 'forward') {
     const baseSrc = frame.dataset.baseSrc;
     if (!baseSrc || !frame.contentWindow) return;
