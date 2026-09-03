@@ -33,11 +33,19 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
     <meta name="description" content="Personal profile and portfolio website of Asif Iqbal. Explore my experiences, education, and latest projects.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Preload above-the-fold webfont files; see docs/notes.md#font-loading-baselayoutastro for why (+ the Cloudflare Fonts gotcha). -->
+    <!-- Preload above-the-fold webfont files; see docs/notes.md#font-loading-baselayoutastro. -->
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2">
-    <!-- Deliberately render-blocking (~1KB gzip) — see docs/notes.md#font-loading-baselayoutastro for why the old media=print deferral defeated display=optional. -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional">
+    <!-- Non-blocking via media=print swap trick; reverted from render-blocking — see docs/notes.md#font-loading-baselayoutastro, fonts turned out not to be the CLS cause at all. -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional"
+      media="print"
+      onload="this.media='all'"
+    >
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional">
+    </noscript>
     <ClientRouter />
     <slot name="head" />
 </head>
