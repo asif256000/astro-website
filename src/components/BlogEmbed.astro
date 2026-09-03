@@ -59,10 +59,22 @@ const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.
     return document.body.classList.contains('dark-mode') ? 'dark' : 'light';
   }
 
+  // The blog's last-reported location (pathname + search, no `theme` param),
+  // via postMessage — see the required blog-side snippet below. Without it
+  // this stays null and every theme toggle falls back to the base src,
+  // which is exactly the "jumps back to the blog's homepage" bug: the
+  // iframe's own `src` attribute never reflects navigation that happens
+  // *inside* the frame (regular link clicks, or the back/forward buttons
+  // above, which navigate the frame from its own script via
+  // `location.assign`) — only the blog itself knows where it actually is.
+  let currentBlogPath: string | null = null;
+
   function themedUrl(baseSrc: string, theme: string) {
-    const url = new URL(baseSrc, window.location.origin);
-    url.searchParams.set('theme', theme);
-    return url.toString();
+    const target = currentBlogPath
+      ? new URL(currentBlogPath, baseSrc)
+      : new URL(baseSrc, window.location.origin);
+    target.searchParams.set('theme', theme);
+    return target.toString();
   }
 
   function syncFrame(frame: HTMLIFrameElement) {
@@ -73,6 +85,19 @@ const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.
       frame.setAttribute('src', themed);
     }
   }
+
+  // Registered once at module scope (not inside initBlogFrame, which reruns
+  // on every soft navigation back to this page) so it never stacks up.
+  window.addEventListener('message', (event) => {
+    const frame = document.getElementById('blog-embed-frame') as HTMLIFrameElement | null;
+    const baseSrc = frame?.dataset.baseSrc;
+    if (!baseSrc) return;
+    const expectedOrigin = new URL(baseSrc, window.location.origin).origin;
+    if (event.origin !== expectedOrigin) return;
+    if (event.data?.type !== 'blog-nav-state') return;
+    if (typeof event.data.path !== 'string') return;
+    currentBlogPath = event.data.path;
+  });
 
   let observer: MutationObserver | null = null;
 
@@ -124,6 +149,27 @@ const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.
   //   })();
   //
   // Without a listener at all the buttons render but do nothing.
+  //
+  // SECOND required piece — reporting current location back to the parent.
+  // The parent (this file) reloads the iframe's `src` from scratch on every
+  // theme toggle (see themedUrl/currentBlogPath above), since it has no
+  // other way to know where the iframe navigated to on its own (regular
+  // link clicks, or the back/forward buttons calling location.assign
+  // above) — the outer <iframe src> attribute only ever reflects what *we*
+  // last set it to, never the frame's actual current location. Without this
+  // piece, every theme toggle resets the embed back to the blog's homepage.
+  // Add this snippet (fires on every real page load, so it also covers
+  // navigation via the back/forward listener above):
+  //
+  //   (function () {
+  //     if (window.parent === window) return; // not framed, nothing to report
+  //     const url = new URL(location.href);
+  //     url.searchParams.delete('theme'); // parent manages this param itself
+  //     window.parent.postMessage(
+  //       { type: 'blog-nav-state', path: url.pathname + url.search },
+  //       '*' // payload is just our own path — not sensitive enough to need a fixed target origin
+  //     );
+  //   })();
   function postNav(frame: HTMLIFrameElement, action: 'back' | 'forward') {
     const baseSrc = frame.dataset.baseSrc;
     if (!baseSrc || !frame.contentWindow) return;
