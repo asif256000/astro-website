@@ -34,6 +34,24 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!--
+      Preload the exact webfont files used above the fold (Hero.astro's
+      title + body text), so they're already in the cache by the time the
+      stylesheet below activates instead of swapping in after first paint —
+      that swap was reflowing the entire hero block (Lighthouse's Agentic
+      Browsing audit measured CLS 0.308, all of it attributed to this one
+      element). font-display stays 'swap' and the fonts are unchanged; this
+      just gets the bytes in earlier so the swap has nothing to visibly do.
+
+      Inter serves all five requested weights (400–800) off this single
+      variable-font file for the Latin subset, so one preload covers the
+      whole family; JetBrains Mono 700 is its own file. Both URLs are
+      version-hashed by Google Fonts (v20 / v24 as of writing) — if Google
+      rotates the file, the preload just silently misses and the fonts
+      fall back to the normal swap-in path below, no breakage either way.
+    -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2">
+    <!--
       All fonts in one request (Inter + Fira Code + JetBrains Mono).
       Loaded non-blocking via the media=print trick: the browser downloads
       the font CSS in parallel with rendering, then flips to 'all' on load.

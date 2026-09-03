@@ -1,0 +1,18 @@
+# Asif Iqbal
+
+> Personal portfolio and resume site for Asif Iqbal, a PhD researcher at Virginia Tech working on Machine Learning applied to Phylo-oncology, Genomics, and Bioinformatics.
+
+## Pages
+
+- [Home](https://asifiqbal.xyz/): Introduction, skills summary, and embedded resume.
+- [Overview](https://asifiqbal.xyz/overview): Background, research focus, and interests.
+- [Experience & Education](https://asifiqbal.xyz/experience_education): Work history and academic background.
+- [Projects & Certifications](https://asifiqbal.xyz/projects_certificates): Selected projects and certifications.
+- [Awards & Interests](https://asifiqbal.xyz/awards_interests): Awards, honors, and personal interests.
+- [Resume & Blog](https://asifiqbal.xyz/resume): Downloadable resume (PDF) and an embedded personal blog.
+
+## Contact
+
+- Email: asifiqbal.vt@gmail.com
+- GitHub: https://github.com/asif256000
+- LinkedIn: https://www.linkedin.com/in/asif-iqbal-r
