@@ -32,48 +32,39 @@ in a local build, check these before re-debugging the app code:
 ## Font loading (`BaseLayout.astro`)
 
 Hero.astro's title (JetBrains Mono 700) and body text (Inter) load via
-Google Fonts: a normal (render-blocking, ~1KB gzip) stylesheet link with
-`display=optional`, plus `<link rel="preload">` for the two specific woff2
-files actually used above the fold — Inter serves all five requested
-weights off one variable-font file for the Latin subset, so a single
-preload covers the whole family.
+Google Fonts, non-blocking `media="print"` swap trick, `display=optional`,
+plus `<link rel="preload">` for the two specific woff2 files actually used
+above the fold — Inter serves all five requested weights off one
+variable-font file for the Latin subset, so a single preload covers the
+whole family. Font URLs are version-hashed by Google (`v20`/`v24` as of
+writing); if Google rotates the file the preload just silently misses, no
+breakage.
 
-The stylesheet link is deliberately **not** deferred via the old
-`media="print"` swap trick, even though that trick is the standard
-non-blocking-fonts pattern. Reasoning, arrived at the hard way (three
-rounds of "fixed" that PageSpeed's Slow-4G mobile run kept disproving):
+**Fonts turned out to be unrelated to the site's CLS problem** — noted here
+because it took four rounds of "fixed that" to actually establish it, in
+case the same red herring shows up again. `font-display` only governs
+behavior *after* a `@font-face` is registered, so the theory was that
+deferring the stylesheet (no `@font-face` yet at first paint) forced a
+swap+reflow once it did load, regardless of `display` value. Ruled out by
+elimination, each verified against a real PageSpeed mobile run (Slow 4G) —
+not local builds, which never showed the shift at all: preload alone (CLS
+unchanged), `swap`→`optional` (unchanged), and finally making the
+stylesheet fully render-blocking so `@font-face` registers before first
+paint (unchanged — and cost ~1500ms of render-blocking time under
+throttling for nothing, reverted). The actual cause was
+`Hero.astro`'s image loading `loading="lazy"` by Astro's `<Picture>`
+default despite being permanently above the fold — see below.
 
-- `font-display` only governs behavior **after** a `@font-face` is
-  registered and the browser goes to paint text with it — how long to
-  hide text (`block`) or show the fallback (`swap`'s block period is 0)
-  while the font file is in flight, and for `optional`, whether to bother
-  swapping at all if the file isn't ready within ~100ms.
-- Deferring the *stylesheet itself* means no `@font-face` exists yet at
-  first paint, so text unconditionally renders in the CSS fallback
-  (`Courier New` / generic monospace) first — that part's fine and
-  intentional. But once the deferred stylesheet does load and registers
-  the real faces, applying them to already-painted text is a swap+reflow
-  regardless of `display` value, because the font, having been preloaded,
-  is already sitting there "loaded" by the time that registration happens.
-  `font-display` never got a chance to prevent anything — the swap it's
-  meant to gate had already been made inevitable by deferring the CSS.
-  Confirmed by process of elimination: preload alone didn't fix it (CLS
-  0.31+), `swap`→`optional` didn't change it either (still 0.31+, even
-  after removing an unrelated Cloudflare Fonts issue that was also making
-  things worse — see the gotchas section above), and the one variable left
-  was the deferred registration itself.
-- Making the stylesheet link load normally means `@font-face` is
-  registered before first paint, so if the (preloaded, fast) font file is
-  already available by then, text paints correctly the first time — no
-  swap, nothing to shift. `display=optional` is kept as the fallback for
-  when it genuinely isn't ready in time on a slow connection: the browser
-  commits to the fallback for that view instead of blocking or swapping
-  later.
+## Hero image loading (`Hero.astro`)
 
-Font URLs are version-hashed by Google (`v20`/`v24` as of writing) — if
-Google rotates the file, the preload just silently misses with no breakage
-(the blocking stylesheet link still resolves the fonts correctly either
-way, just slightly slower without the head start).
+`<Picture loading="eager" fetchpriority="high" .../>` — both attributes are
+required. Astro's `<Picture>`/`<Image>` components default `loading` to
+`"lazy"` when not specified, which silently fought the `fetchpriority="high"`
+that was already set: an always-visible-on-load hero image was being
+lazy-loaded. This was the actual cause of the site's persistent mobile CLS
+(~0.3, entirely attributed to the hero block by Lighthouse) — not the font
+loading strategy above, despite that being the obvious/documented suspect
+and the thing four separate rounds of fixes targeted first.
 
 ## Blog iframe (`BlogEmbed.astro`)
 
