@@ -19,13 +19,26 @@ const { basic_info, education, experience, skills, projects, certifications, hon
 });
 
 // Helpers
+// Category order chosen so the smaller categories (Programming Language,
+// Platforms) pair up in the first row of the 2-column skills grid, and the
+// larger ones (Frameworks, Tools) pair up in the second — see SkillSection.astro.
+const SKILL_CATEGORY_ORDER = ['Programming Language', 'Platforms', 'Frameworks', 'Tools'];
+
 const arrangeSkills = (all) => {
-    const arranged = {};
+    const grouped = {};
     for (const s of all) {
-        if (!arranged[s.subcategory]) arranged[s.subcategory] = {};
-        if (!arranged[s.subcategory][s.proficiency]) arranged[s.subcategory][s.proficiency] = [];
-        arranged[s.subcategory][s.proficiency].push(s.skill);
+        if (!grouped[s.subcategory]) grouped[s.subcategory] = {};
+        if (!grouped[s.subcategory][s.proficiency]) grouped[s.subcategory][s.proficiency] = [];
+        grouped[s.subcategory][s.proficiency].push(s.skill);
     }
+    // Rebuild in the fixed display order, appending any unlisted category (if
+    // the data ever grows a new one) at the end rather than dropping it.
+    const orderedKeys = [
+        ...SKILL_CATEGORY_ORDER.filter(cat => cat in grouped),
+        ...Object.keys(grouped).filter(cat => !SKILL_CATEGORY_ORDER.includes(cat)),
+    ];
+    const arranged = {};
+    for (const key of orderedKeys) arranged[key] = grouped[key];
     return arranged;
 };
 
@@ -94,7 +107,11 @@ const timeline_events = [
                             <div class="timeline-body">
                                 <div class="timeline-details">
                                     <p><strong>Location:</strong> {event.location}</p>
-                                    
+
+                                    {event.event_type === 'education' && event.minor && (
+                                        <p><strong>Specialization: {event.minor}</strong></p>
+                                    )}
+
                                     {event.event_type === 'education' ? (
                                         <p><strong>{(!event.duration_end || new Date(event.duration_end) > new Date()) ? "Grade so far" : "Final grade"}:</strong> {event.gpa}</p>
                                     ) : (
@@ -126,7 +143,7 @@ const timeline_events = [
         </section>
 
         <section id="skills">
-            <h2 class="section-title">Proficient Skills</h2>
+            <h2 class="section-title">Technical Skills</h2>
             <SkillSection skillsDictionary={arranged_skills} />
         </section>
 
