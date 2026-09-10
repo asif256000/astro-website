@@ -38,12 +38,16 @@ const profColorMap = {
   .skills-container {
     display: grid;
     grid-template-columns: 1fr;
+    align-items: start; /* don't stretch a short category to match a tall neighbor */
     gap: 1.5rem;
   }
 
   @media (min-width: 768px) {
     .skills-container {
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      /* Fixed 2 columns (rather than auto-fit) so category order controls
+         row pairing: Programming Language + Platforms on row 1 (fewer
+         skills each), Frameworks + Tools on row 2 (more skills each). */
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 

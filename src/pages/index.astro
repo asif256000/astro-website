@@ -2,31 +2,20 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getData } from '../utils/db.js';
 import Hero from '../components/Hero.astro';
-import SkillSection from '../components/SkillSection.astro';
 
-const { basic_info, skills, resume } = getData({
-	skills: 'SELECT * FROM skills WHERE fk_user = ?',
-	resume: 'SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1',
+const { basic_info, advanced_skills } = getData({
+	advanced_skills: `SELECT skill FROM skills WHERE fk_user = ? AND proficiency = 'Advanced' GROUP BY skill ORDER BY
+		CASE subcategory
+			WHEN 'Programming Language' THEN 1
+			WHEN 'Frameworks' THEN 2
+			WHEN 'Tools' THEN 3
+			WHEN 'Platforms' THEN 4
+			ELSE 5
+		END, skill`,
 });
-
-// Helper to arrange skills
-const arranged_skills = {};
-for (const skill of skills) {
-	if (!arranged_skills[skill.subcategory]) {
-		arranged_skills[skill.subcategory] = { [skill.proficiency]: [skill.skill] };
-	} else {
-		if (!arranged_skills[skill.subcategory][skill.proficiency]) {
-			arranged_skills[skill.subcategory][skill.proficiency] = [skill.skill];
-		} else {
-			arranged_skills[skill.subcategory][skill.proficiency].push(skill.skill);
-		}
-	}
-}
-
-const resume_path = resume.length > 0 ? resume[0].file_path : '';
 ---
 
-<BaseLayout 
+<BaseLayout
     title={basic_info ? `${basic_info.name.split(" ")[0]}'s Profile` : "Profile"}
     current_page="home"
 >
@@ -35,7 +24,7 @@ const resume_path = resume.length > 0 ? resume[0].file_path : '';
         <!-- Hero Section -->
         <section id="intro">
             {basic_info && (
-                <Hero 
+                <Hero
                     name={basic_info.name}
                     location={basic_info.location}
                     email={basic_info.email}
@@ -47,31 +36,20 @@ const resume_path = resume.length > 0 ? resume[0].file_path : '';
             )}
         </section>
 
-        <!-- Skills Section -->
-        <section id="skills" class="section-block">
-            <h2 class="section-title">Technical Skills</h2>
-            <SkillSection skillsDictionary={arranged_skills} />
-        </section>
-        
-        <!-- Resume Section -->
-        <section id="resume" class="section-block">
-            <h2 class="section-title">Resume</h2>
-            {resume_path && (
-                <div class="resume-wrapper glass-panel">
-                    <div class="resume-header">
-                        <p>Preview my latest resume below, or download a copy for your records.</p>
-                        <a href={`/${resume_path}`} download class="btn primary">
-                            <span class="icon">⬇</span> Download PDF
-                        </a>
+        <!-- Skills Highlight -->
+        {advanced_skills.length > 0 && (
+            <section id="skills" class="section-block">
+                <h2 class="section-title">Skills Highlights</h2>
+                <div class="skills-highlight glass-panel">
+                    <div class="skills-list">
+                        {advanced_skills.map(s => (
+                            <span class="skill-badge">{s.skill}</span>
+                        ))}
                     </div>
-                    <div class="pdf-container">
-                        <object data={`/${resume_path}`} type="application/pdf" width="100%" height="800px">
-                            <embed src={`/${resume_path}`} type="application/pdf" />
-                        </object>
-                    </div>
+                    <a href="/overview#skills" class="skills-more-link">View all skills on the Overview page &rarr;</a>
                 </div>
-            )}
-        </section>
+            </section>
+        )}
     </div>
 </BaseLayout>
 
@@ -80,48 +58,50 @@ const resume_path = resume.length > 0 ? resume[0].file_path : '';
         scroll-margin-top: 100px; /* offset for fixed navbar */
     }
 
-    .resume-wrapper {
+    .skills-highlight {
         padding: 1.5rem;
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 1.25rem;
     }
 
-    .resume-header {
+    .skills-list {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
         flex-wrap: wrap;
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
-    .resume-header p {
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        justify-content: center;
-        padding: 0.6rem 1.25rem;
-        border-radius: 8px;
+    .skill-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 9999px; /* Pill shape */
+        font-size: 0.85rem;
         font-weight: 600;
-        transition: all 0.2s ease;
-        background-color: var(--accent-color);
-        color: #fff;
-    }
-
-    .btn:hover {
-        background-color: var(--accent-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    .pdf-container {
-        border-radius: 8px;
-        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-primary);
+        background-color: var(--surface-color);
         border: 1px solid var(--border-color);
+        border-left: 4px solid #10b981; /* Emerald, matches "Advanced" hint elsewhere */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+        cursor: default;
+    }
+
+    .skill-badge:hover {
+        transform: scale(1.05);
+    }
+
+    .skills-more-link {
+        align-self: flex-start;
+        font-weight: 600;
+        color: var(--accent-color);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        text-shadow: 0 0 6px rgba(59, 130, 246, 0.18);
+        transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .skills-more-link:hover {
+        color: var(--accent-hover);
+        text-shadow: 0 0 12px rgba(59, 130, 246, 0.55);
     }
 </style>
