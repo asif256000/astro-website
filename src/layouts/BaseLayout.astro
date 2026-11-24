@@ -40,7 +40,6 @@ const ogImage = await getImage({ src: profileImageSrc, width: 1200, height: 1200
 const seo = getPageSeo({
 	pageId: current_page,
 	site: Astro.site,
-	url: Astro.url,
 	imagePath: ogImage.src,
 	overrides: { title, description },
 });

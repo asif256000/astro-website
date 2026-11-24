@@ -41,7 +41,13 @@ export interface PageMeta {
   description: string;
   /** Human label used in the breadcrumb trail and the visually-hidden <h1>. */
   heading: string;
-  /** Route path, used for canonical URLs and breadcrumbs. */
+  /**
+   * Exact served route, used for canonical URLs, breadcrumbs and the llms.txt
+   * index. Inner pages carry a trailing slash because Astro's directory build
+   * emits `<name>/index.html` and Cloudflare Pages 308-redirects the
+   * slash-free form to it. A canonical pointing at a redirect is worse than
+   * useless, so this must match what the server actually serves.
+   */
   path: string;
   /** Keep out of search indexes (404 only). */
   noindex?: boolean;
@@ -62,35 +68,35 @@ export const PAGE_META: Record<string, PageMeta> = {
   overview: {
     title: 'Overview',
     heading: 'Overview',
-    path: '/overview',
+    path: '/overview/',
     description:
       "A full overview of Asif Iqbal Rahaman's background: career timeline, technical skills, projects, certifications, awards and research interests.",
   },
   experience_education: {
     title: 'Experience & Education',
     heading: 'Experience & Education',
-    path: '/experience_education',
+    path: '/experience_education/',
     description:
       'Work history and academic background: a Virginia Tech PhD and MS, a BTech from VIT Vellore, and software engineering roles at Ericsson and Seclore.',
   },
   projects_certificates: {
     title: 'Projects & Certifications',
     heading: 'Projects & Certifications',
-    path: '/projects_certificates',
+    path: '/projects_certificates/',
     description:
       'Selected projects and professional certifications spanning machine learning, bioinformatics, generative AI, computer vision and web development.',
   },
   awards_interests: {
     title: 'Awards & Interests',
     heading: 'Awards & Interests',
-    path: '/awards_interests',
+    path: '/awards_interests/',
     description:
       'Honors and awards earned by Asif Iqbal Rahaman, alongside personal interests and a photo gallery from travel, hiking and photography.',
   },
   resume: {
     title: 'Resume & Blog',
     heading: 'Resume & Blog',
-    path: '/resume',
+    path: '/resume/',
     description:
       "Download Asif Iqbal Rahaman's latest resume as a PDF, and read recent posts from his personal blog on research, engineering and side projects.",
   },
@@ -284,8 +290,6 @@ interface PageSeoArgs {
   pageId: string;
   /** `Astro.site` - the configured origin. */
   site: URL | undefined;
-  /** `Astro.url` - used only for its pathname, never its origin. */
-  url: URL;
   /** Build-time hashed path to the social image (e.g. /_astro/image.hash.png). */
   imagePath: string;
   /** Optional per-page overrides. */
@@ -300,15 +304,13 @@ interface PageSeoArgs {
  * hostname-independent: the same HTML served from asifiqbal.xyz and from the
  * project's .pages.dev twin both point search engines at asifiqbal.xyz.
  */
-export function getPageSeo({ pageId, site, url, imagePath, overrides }: PageSeoArgs) {
+export function getPageSeo({ pageId, site, imagePath, overrides }: PageSeoArgs) {
   const origin = (site?.origin ?? SITE_URL).replace(/\/+$/, '');
   const meta = PAGE_META[pageId] ?? PAGE_META.home;
   const profile = getProfile();
   const name = profile.basic_info?.name ?? 'Asif Iqbal Rahaman';
 
-  // Trailing slash only for the root, matching how Astro emits the files.
-  const path = url.pathname.replace(/\/+$/, '') || '/';
-  const canonical = path === '/' ? `${origin}/` : `${origin}${path}`;
+  const canonical = `${origin}${meta.path}`;
   const imageUrl = `${origin}${imagePath}`;
 
   // Home leads with the name (that is what people search); inner pages lead
