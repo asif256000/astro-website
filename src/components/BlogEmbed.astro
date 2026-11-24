@@ -11,7 +11,7 @@ interface Props {
 const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.props;
 ---
 
-<!-- Cross-origin blog embed; back/forward post messages into the frame (blog-side listener required — see docs/notes.md#blog-iframe-blogembedastro). Buttons are separately-positioned absolute elements, not a shared wrapper, to avoid them collapsing together on click. -->
+<!-- Cross-origin blog embed; back/forward post messages into the frame (blog-side listener required - see docs/notes.local.md#blog-iframe-blogembedastro). Buttons are separately-positioned absolute elements, not a shared wrapper, to avoid them collapsing together on click. -->
 <div class="blog-embed-container" style={`--blog-embed-height: ${height}; --blog-embed-desktop-height: ${desktopHeight};`}>
   <iframe
     id="blog-embed-frame"
@@ -44,7 +44,7 @@ const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.
   }
 
   // Blog's last-reported location, via postMessage (blog-side snippet
-  // required — see docs/notes.md#blog-iframe-blogembedastro). Without it,
+  // required - see docs/notes.local.md#blog-iframe-blogembedastro). Without it,
   // every theme toggle resets the embed to the blog's homepage instead of
   // staying on the current page.
   let currentBlogPath: string | null = null;
@@ -82,12 +82,12 @@ const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.
   let observer: MutationObserver | null = null;
 
   // Back/forward: cross-origin means contentWindow.history is unreachable,
-  // so these postMessage into the frame — blog needs a matching listener
-  // (sessionStorage-based, NOT history.back()/forward() — an iframe shares
+  // so these postMessage into the frame - blog needs a matching listener
+  // (sessionStorage-based, NOT history.back()/forward() - an iframe shares
   // the tab's joint history, so that falls through to navigating the outer
   // site once the iframe's own entries run out, confirmed live). Full
   // snippets for both required blog-side listeners are in
-  // docs/notes.md#blog-iframe-blogembedastro.
+  // docs/notes.local.md#blog-iframe-blogembedastro.
   function postNav(frame: HTMLIFrameElement, action: 'back' | 'forward') {
     const baseSrc = frame.dataset.baseSrc;
     if (!baseSrc || !frame.contentWindow) return;
@@ -180,7 +180,7 @@ const { src, title = 'Blog', height = '800px', desktopHeight = height } = Astro.
     border: none;
   }
 
-  /* Matches the nav's own mobile/desktop breakpoint (Navbar.astro) — give the
+  /* Matches the nav's own mobile/desktop breakpoint (Navbar.astro) - give the
      blog more room to breathe once there's a laptop-sized viewport to use. */
   @media (min-width: 900px) {
     .blog-embed-frame {

@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import BlogEmbed from '../components/BlogEmbed.astro';
 import { getData } from '../utils/db.js';
 
-const { basic_info, resume } = getData({
+const { resume } = getData({
 	resume: 'SELECT * FROM resume WHERE fk_user = ? AND is_latest = 1',
 });
 
@@ -13,7 +13,6 @@ const BLOG_URL = 'https://blog.perch-iguana.ts.net';
 ---
 
 <BaseLayout
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Resume & Blog` : "Resume & Blog"}
     current_page="resume"
 >
     <!-- Heading handled by Navbar -->

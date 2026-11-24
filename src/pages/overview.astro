@@ -21,11 +21,17 @@ const { basic_info, education, experience, skills, projects, certifications, hon
 // Helpers
 // Category order chosen so the smaller categories (Programming Language,
 // Platforms) pair up in the first row of the 2-column skills grid, and the
-// larger ones (Frameworks, Tools) pair up in the second — see SkillSection.astro.
+// larger ones (Frameworks, Tools) pair up in the second - see SkillSection.astro.
 const SKILL_CATEGORY_ORDER = ['Programming Language', 'Platforms', 'Frameworks', 'Tools'];
 
-const arrangeSkills = (all) => {
-    const grouped = {};
+// Row shapes as returned by the skills/interests queries above.
+interface SkillRow { skill: string; subcategory: string; proficiency: string }
+interface InterestRow { interest: string; subcategory: string }
+// subcategory -> proficiency -> skill names
+type SkillGroups = Record<string, Record<string, string[]>>;
+
+const arrangeSkills = (all: SkillRow[]): SkillGroups => {
+    const grouped: SkillGroups = {};
     for (const s of all) {
         if (!grouped[s.subcategory]) grouped[s.subcategory] = {};
         if (!grouped[s.subcategory][s.proficiency]) grouped[s.subcategory][s.proficiency] = [];
@@ -37,13 +43,13 @@ const arrangeSkills = (all) => {
         ...SKILL_CATEGORY_ORDER.filter(cat => cat in grouped),
         ...Object.keys(grouped).filter(cat => !SKILL_CATEGORY_ORDER.includes(cat)),
     ];
-    const arranged = {};
+    const arranged: SkillGroups = {};
     for (const key of orderedKeys) arranged[key] = grouped[key];
     return arranged;
 };
 
-const arrangeInterests = (all) => {
-    const arranged = {};
+const arrangeInterests = (all: InterestRow[]): Record<string, string[]> => {
+    const arranged: Record<string, string[]> = {};
     for (const i of all) {
         if (!arranged[i.subcategory]) arranged[i.subcategory] = [];
         arranged[i.subcategory].push(i.interest);
@@ -64,7 +70,6 @@ const timeline_events = [
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Overview` : "Overview"}
     current_page="overview"
 >
     <!-- Extra head elements -->

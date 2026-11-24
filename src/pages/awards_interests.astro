@@ -4,14 +4,16 @@ import { getData } from '../utils/db.js';
 import Card from '../components/Card.astro';
 import { getImage } from 'astro:assets';
 
-const { basic_info, honors_and_awards, interests } = getData({
+const { honors_and_awards, interests } = getData({
 	honors_and_awards: 'SELECT * FROM honors_and_awards WHERE fk_user = ?',
 	interests: 'SELECT * FROM interests WHERE fk_user = ?',
 });
 
 // Helper to sort interests
-const arrangeInterests = (all) => {
-    const arranged = {};
+interface InterestRow { interest: string; subcategory: string }
+
+const arrangeInterests = (all: InterestRow[]): Record<string, string[]> => {
+    const arranged: Record<string, string[]> = {};
     for (const i of all) {
         if (!arranged[i.subcategory]) arranged[i.subcategory] = [];
         arranged[i.subcategory].push(i.interest);
@@ -22,35 +24,49 @@ const arrangeInterests = (all) => {
 const arranged_interests = arrangeInterests(interests);
 
 // ---------------------------------------------------------------------------
-// Hobbies Gallery — auto-discover all media files at build time
+// Hobbies Gallery - auto-discover all media files at build time
 // ---------------------------------------------------------------------------
 
-// 1. Static images (jpg, jpeg, png, webp) — processed by Astro's image pipeline
+// 1. Static images (jpg, jpeg, png, webp) - processed by Astro's image pipeline
 const rawImages = import.meta.glob<{ default: ImageMetadata }>(
     '../assets/hobbies/*.{jpg,jpeg,png,webp}',
     { eager: true }
 );
 
-// 2. GIFs — pass through as-is (no transcoding, preserves animation)
+// 2. GIFs - pass through as-is (no transcoding, preserves animation)
 const rawGifs = import.meta.glob<{ default: ImageMetadata }>(
     '../assets/hobbies/*.gif',
     { eager: true }
 );
 
-// 3. Videos — import as raw URLs
+// 3. Videos - import as raw URLs
 const rawVideos = import.meta.glob(
     '../assets/hobbies/*.{mp4,webm,mov}',
     { eager: true, query: '?url', import: 'default' }
 );
 
-// Process static images with Astro's optimised pipeline (keep original aspect ratio)
+// Process static images with Astro's optimised pipeline (keep original aspect ratio).
+//
+// Two renditions per photo, because the grid and the lightbox need wildly
+// different sizes. Passing no width at all (as this once did) makes Astro emit
+// the source at full resolution - 3MB+ webp files for tiles displayed at
+// 160-200px. See docs/notes.local.md#hobby-gallery-image-sizes.
+const THUMB_WIDTH = 600;   // masonry columns are 160-200px; 600 covers 3x DPR
+const FULL_WIDTH = 2560;   // lightbox caps at min(92vw, 960px); 2560 matches the
+                           // downscaled source cap, so the lightbox serves the
+                           // highest resolution the repo actually holds
+
 const processedImages = await Promise.all(
     Object.entries(rawImages).map(async ([path, mod]) => {
         const src = mod.default;
-        const optimized = await getImage({ src, format: 'webp' });
+        const [thumb, full] = await Promise.all([
+            getImage({ src, format: 'webp', width: THUMB_WIDTH }),
+            getImage({ src, format: 'webp', width: FULL_WIDTH }),
+        ]);
         return {
             type: 'image' as const,
-            src: optimized.src,
+            src: thumb.src,
+            full: full.src,
             width: src.width,
             height: src.height,
             alt: path.split('/').pop()?.replace(/\.[^.]+$/, '') ?? 'Hobby photo',
@@ -58,7 +74,7 @@ const processedImages = await Promise.all(
     })
 );
 
-// GIFs — use the raw Vite asset URL directly.
+// GIFs - use the raw Vite asset URL directly.
 // Do NOT pass through getImage()/Sharp: Sharp re-encodes GIFs which can
 // strip animation frames. Vite copies the file as-is and gives us a
 // hashed public URL via mod.default.src, so no getImage() call is needed.
@@ -66,7 +82,8 @@ const processedGifs = Object.entries(rawGifs).map(([path, mod]) => {
     const src = mod.default;
     return {
         type: 'gif' as const,
-        src: src.src,   // Vite's hashed public URL — already correct for <img>
+        src: src.src,   // Vite's hashed public URL - already correct for <img>
+        full: src.src,  // same asset; GIFs are never re-encoded (see above)
         width: src.width,
         height: src.height,
         alt: path.split('/').pop()?.replace(/\.[^.]+$/, '') ?? 'Hobby gif',
@@ -81,6 +98,7 @@ const processedVideos = Object.entries(rawVideos).map(([path, url]) => {
     return {
         type: 'video' as const,
         src: url as string,
+        full: url as string,
         mime: mimeMap[ext] ?? 'video/mp4',
         alt: filename.replace(/\.[^.]+$/, ''),
     };
@@ -92,7 +110,6 @@ const hasGallery = galleryItems.length > 0;
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Awards & Interests` : "Awards & Interests"}
     current_page="awards_interests"
 >
     <!-- Heading handled by Navbar -->
@@ -177,7 +194,7 @@ const hasGallery = galleryItems.length > 0;
     <!-- Lightbox -->
     {hasGallery && (
     <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Media lightbox">
-        <!-- Dimmed backdrop — clicking it closes the lightbox -->
+        <!-- Dimmed backdrop - clicking it closes the lightbox -->
         <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
         <!-- Bounded card -->
         <div class="lightbox-card">
@@ -199,7 +216,7 @@ const hasGallery = galleryItems.length > 0;
 </BaseLayout>
 
 {hasGallery && (
-<script define:vars={{ galleryItems }}>
+<script is:inline define:vars={{ galleryItems }}>
     // -----------------------------------------------------------------------
     // Lightbox controller
     // -----------------------------------------------------------------------
@@ -232,7 +249,7 @@ const hasGallery = galleryItems.length > 0;
             inner.appendChild(vid);
         } else {
             const img = document.createElement('img');
-            img.src       = item.src;
+            img.src       = item.full ?? item.src;
             img.alt       = item.alt ?? '';
             img.className = 'lightbox-media';
             inner.appendChild(img);
@@ -247,7 +264,7 @@ const hasGallery = galleryItems.length > 0;
 
         const topOffset    = navbar ? Math.ceil(navbar.getBoundingClientRect().bottom) : 0;
         const footerTop    = footer ? footer.getBoundingClientRect().top : window.innerHeight;
-        // If footer is above the viewport bottom it's visible — reserve space for it.
+        // If footer is above the viewport bottom it's visible - reserve space for it.
         const bottomOffset = footerTop < window.innerHeight
             ? Math.ceil(window.innerHeight - footerTop)
             : 0;
@@ -325,7 +342,7 @@ const hasGallery = galleryItems.length > 0;
                 if (tile && vid.videoWidth && vid.videoHeight) {
                     tile.style.aspectRatio = `${vid.videoWidth} / ${vid.videoHeight}`;
                 }
-                vid.play().catch(() => { /* autoplay policy blocked — silently ignore */ });
+                vid.play().catch(() => { /* autoplay policy blocked - silently ignore */ });
             };
 
             // readyState >= 1 means metadata already available (e.g. cached)
@@ -447,7 +464,7 @@ const hasGallery = galleryItems.length > 0;
         transition: opacity 0.45s ease, transform 0.45s ease, box-shadow 0.25s ease;
     }
 
-    /* Revealed state — added by IntersectionObserver in JS */
+    /* Revealed state - added by IntersectionObserver in JS */
     .gallery-tile.is-visible {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -464,7 +481,7 @@ const hasGallery = galleryItems.length > 0;
     /* Video tiles start with a placeholder ratio until JS reads the real dimensions
        from loadedmetadata and overwrites the inline style. */
     .gallery-tile[data-type="video"] {
-        aspect-ratio: 4 / 3;   /* temporary placeholder — JS replaces this */
+        aspect-ratio: 4 / 3;   /* temporary placeholder - JS replaces this */
     }
 
     .tile-media {
@@ -534,7 +551,7 @@ const hasGallery = galleryItems.length > 0;
         pointer-events: auto;
     }
 
-    /* Blurred dimmed backdrop — clicking it closes the lightbox */
+    /* Blurred dimmed backdrop - clicking it closes the lightbox */
     .lightbox-backdrop {
         position: absolute;
         inset: 0;
@@ -622,7 +639,7 @@ const hasGallery = galleryItems.length > 0;
         margin-top: 0.1rem;
     }
 
-    /* Close button — pinned to top-right corner of the card */
+    /* Close button - pinned to top-right corner of the card */
     .lightbox-close {
         position: absolute;
         top: 0.6rem;

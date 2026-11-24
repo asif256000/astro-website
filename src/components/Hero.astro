@@ -104,6 +104,7 @@ const firstName = name.split(" ")[0];
     const wrapper = document.getElementById('typewriter-text');
     const cursorEl = document.getElementById('type-cursor');
     if (!wrapper || !cursorEl) return;
+    const cursor = cursorEl;
 
     // Read segments from data attributes (server-rendered values)
     const plain1 = wrapper.dataset.plain1 ?? "Hi, I'm ";
@@ -118,7 +119,7 @@ const firstName = name.split(" ")[0];
 
     // Clear old content and reset cursor
     wrapper.innerHTML = '';
-    cursorEl.classList.remove('done');
+    cursor.classList.remove('done');
 
     // Pre-create one <span> per segment (empty, appended in order)
     const spans = segments.map(({ cls }) => {
@@ -129,7 +130,7 @@ const firstName = name.split(" ")[0];
     });
 
     // --- Delay helpers (all in ms) ---
-    const rand = (min, max) => min + Math.random() * (max - min);
+    const rand = (min: number, max: number) => min + Math.random() * (max - min);
     const charDelay  = () => rand(65, 145);   // normal letters
     const wordDelay  = () => rand(210, 390);  // after a space (between words)
     const punctDelay = () => rand(130, 230);  // after .,!?';
@@ -146,8 +147,8 @@ const firstName = name.split(" ")[0];
       }
 
       if (segIdx >= segments.length) {
-        // All done — blink 3 more times, then hide cursor
-        setTimeout(() => cursorEl.classList.add('done'), 700);
+        // All done - blink 3 more times, then hide cursor
+        setTimeout(() => cursor.classList.add('done'), 700);
         return;
       }
 
@@ -227,7 +228,7 @@ const firstName = name.split(" ")[0];
     position: relative;
   }
 
-  /* Invisible text that pre-reserves the exact h1 height — prevents CLS */
+  /* Invisible text that pre-reserves the exact h1 height - prevents CLS */
   .typewriter-spacer {
     visibility: hidden;
     white-space: nowrap;
@@ -246,7 +247,7 @@ const firstName = name.split(" ")[0];
     white-space: nowrap;
   }
 
-  /* JS fills this progressively — no CSS animation needed */
+  /* JS fills this progressively - no CSS animation needed */
   .typewriter-text {
     display: inline;
   }

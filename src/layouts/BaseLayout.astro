@@ -4,22 +4,46 @@ import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import Navbar from '../components/Navbar.astro';
 import { logoFitProps } from '../utils/logos';
+import { getPageSeo, SCHOLAR_URL, ORCID_URL } from '../utils/seo';
 
 import profileLogoSrc from '../assets/logos/profile_logo.png';
+import profileImageSrc from '../assets/image.png';
 import linkedinSrc    from '../assets/logos/linkedin.png';
 import githubSrc      from '../assets/logos/github.png';
 import gscholarSrc    from '../assets/logos/gscholar.png';
 import orcidSrc       from '../assets/logos/orcid.png';
 
 interface Props {
-	title: string;
+	/** Override the title from PAGE_META; normally omitted. */
+	title?: string;
+	/** Override the description from PAGE_META; normally omitted. */
+	description?: string;
+	/** Keys into PAGE_META in utils/seo.ts and sets the active nav item. */
 	current_page?: string;
+	/**
+	 * Set when the page renders its own <h1> (home via Hero, 404). Otherwise
+	 * the layout supplies a visually-hidden one so no page ships without.
+	 */
+	has_own_h1?: boolean;
 }
 
-const { title, current_page = 'home' } = Astro.props;
+const { title, description, current_page = 'home', has_own_h1 = false } = Astro.props;
 
 // Generate an optimised 64×64 favicon at build time from the PNG source
 const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, format: 'png' });
+
+// Social-share card. The profile photo is square (2394×2394), so this is a
+// `summary` card rather than `summary_large_image`; a purpose-built 1200×630
+// card would be a drop-in replacement here.
+const ogImage = await getImage({ src: profileImageSrc, width: 1200, height: 1200, format: 'jpeg', quality: 82 });
+
+const seo = getPageSeo({
+	pageId: current_page,
+	site: Astro.site,
+	url: Astro.url,
+	imagePath: ogImage.src,
+	overrides: { title, description },
+});
 ---
 
 <!DOCTYPE html>
@@ -28,15 +52,54 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
+    <title>{seo.title}</title>
     <link href={favicon.src} rel="icon" type="image/png">
-    <meta name="description" content="Personal profile and portfolio website of Asif Iqbal. Explore my experiences, education, and latest projects.">
+    <meta name="description" content={seo.description}>
+
+    <!-- Canonical. Built from the configured `site` origin, NOT the request
+         host, so the *.pages.dev copy of this build points search engines at
+         the custom domain instead of competing with it. -->
+    <link rel="canonical" href={seo.canonical}>
+    <meta name="author" content={seo.name}>
+    <meta
+      name="robots"
+      content={seo.noindex
+        ? 'noindex, follow'
+        : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
+    >
+
+    <!-- Open Graph: drives link previews on LinkedIn, Slack, iMessage, etc. -->
+    <meta property="og:type" content={current_page === 'home' ? 'profile' : 'website'}>
+    <meta property="og:site_name" content={seo.name}>
+    <meta property="og:title" content={seo.title}>
+    <meta property="og:description" content={seo.description}>
+    <meta property="og:url" content={seo.canonical}>
+    <meta property="og:locale" content="en_US">
+    <meta property="og:image" content={seo.imageUrl}>
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="1200">
+    <meta property="og:image:alt" content={`Portrait of ${seo.name}`}>
+
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content={seo.title}>
+    <meta name="twitter:description" content={seo.description}>
+    <meta name="twitter:image" content={seo.imageUrl}>
+    <meta name="twitter:image:alt" content={`Portrait of ${seo.name}`}>
+
+    <!-- Matches the glass UI so mobile browser chrome doesn't clash. -->
+    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+
+    <!-- Plain-text mirrors of this site for LLM crawlers. -->
+    <link rel="alternate" type="text/plain" href={`${seo.origin}/llms.txt`} title="llms.txt">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Preload above-the-fold webfont files; see docs/notes.md#font-loading-baselayoutastro. -->
+    <!-- Preload above-the-fold webfont files; see docs/notes.local.md#font-loading-baselayoutastro. -->
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2">
-    <!-- Non-blocking via media=print swap trick; reverted from render-blocking — see docs/notes.md#font-loading-baselayoutastro, fonts turned out not to be the CLS cause at all. -->
+    <!-- Non-blocking via media=print swap trick; reverted from render-blocking - see docs/notes.local.md#font-loading-baselayoutastro, fonts turned out not to be the CLS cause at all. -->
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional"
@@ -46,6 +109,9 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=JetBrains+Mono:wght@400;700&display=optional">
     </noscript>
+    <!-- schema.org graph: one Person node, @id-referenced from every page. -->
+    <script type="application/ld+json" set:html={JSON.stringify(seo.schema)} is:inline />
+
     <ClientRouter />
     <slot name="head" />
 </head>
@@ -68,22 +134,23 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
         <Navbar current_page={current_page} />
 
         <main id="main-content" transition:animate="fade">
+            {!has_own_h1 && <h1 class="sr-only">{seo.heading}</h1>}
             <slot />
         </main>
         
         <footer class="glass-panel">
             <p>My Profile</p>
             <div class="social-media-links">
-                <a href="https://www.linkedin.com/in/asif-iqbal-r" target="_blank" class="footer-logo-box">
+                <a href="https://www.linkedin.com/in/asif-iqbal-r" target="_blank" rel="noopener" class="footer-logo-box">
                     <Image src={linkedinSrc} alt="LinkedIn" {...logoFitProps(linkedinSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
-                <a href="https://github.com/asif256000" target="_blank" class="footer-logo-box">
+                <a href="https://github.com/asif256000" target="_blank" rel="noopener" class="footer-logo-box">
                     <Image src={githubSrc} alt="GitHub" {...logoFitProps(githubSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
-                <a href="https://scholar.google.com/citations?hl=en&user=EImUgsAAAAAJ" target="_blank" class="footer-logo-box">
+                <a href={SCHOLAR_URL} target="_blank" rel="noopener" class="footer-logo-box">
                     <Image src={gscholarSrc} alt="GoogleScholar" {...logoFitProps(gscholarSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
-                <a href="https://orcid.org/0009-0008-8317-8133" target="_blank" class="footer-logo-box">
+                <a href={ORCID_URL} target="_blank" rel="noopener" class="footer-logo-box">
                     <Image src={orcidSrc} alt="ORCID" {...logoFitProps(orcidSrc, 48)} class="logo" fetchpriority="low" loading="lazy" />
                 </a>
             </div>
@@ -101,11 +168,11 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
     <!-- Re-apply dark mode class immediately after ClientRouter swaps the DOM -->
     <script>
         // Global spotlight delegation (runs once on bundle execution)
-        let lastPanel = null;
+        let lastPanel: HTMLElement | null = null;
         document.addEventListener('mousemove', (e) => {
-            const target = e.target;
+            const target = e.target as HTMLElement | null;
             if (!target) return;
-            const panel = target.closest('.glass-panel');
+            const panel = target.closest<HTMLElement>('.glass-panel');
             
             if (panel && (panel.classList.contains('navbar') || panel.tagName === 'FOOTER')) {
                 if (lastPanel) {
@@ -149,7 +216,7 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
 
             // Sync toggle checked state BEFORE the browser paints to prevent the
             // visible animation caused by the checkbox going unchecked → checked.
-            const toggle = document.getElementById("dark-mode-toggle");
+            const toggle = document.getElementById("dark-mode-toggle") as HTMLInputElement | null;
             if (toggle) toggle.checked = isDark;
         });
 
@@ -157,11 +224,11 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
         // darkModeToggle/scrollBtn can persist across view-transition DOM morphs, so the
         // window/document-scoped listeners below are named and removed before re-adding
         // to avoid stacking up one more listener per navigation.
-        let toggleChangeHandler = null;
-        let checkScrollHandler = null;
+        let toggleChangeHandler: ((e: Event) => void) | null = null;
+        let checkScrollHandler: (() => void) | null = null;
 
         document.addEventListener('astro:page-load', () => {
-            const darkModeToggle = document.getElementById("dark-mode-toggle");
+            const darkModeToggle = document.getElementById("dark-mode-toggle") as HTMLInputElement | null;
             const body = document.body;
 
             // Sync toggle state with current body class
@@ -171,8 +238,8 @@ const favicon = await getImage({ src: profileLogoSrc, width: 64, height: 64, for
                 if (toggleChangeHandler) {
                     darkModeToggle.removeEventListener("change", toggleChangeHandler);
                 }
-                toggleChangeHandler = (e) => {
-                    if (e.target.checked) {
+                toggleChangeHandler = (e: Event) => {
+                    if ((e.target as HTMLInputElement).checked) {
                         body.classList.add("dark-mode");
                         localStorage.setItem("darkMode", "enabled");
                     } else {

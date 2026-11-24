@@ -7,7 +7,7 @@ const { skillsDictionary } = Astro.props;
 
 // Group logic
 const proficiencyOrder = ["Advanced", "Intermediate", "Beginner"];
-const profColorMap = {
+const profColorMap: Record<string, string> = {
   "Advanced": "prof-adv",
   "Intermediate": "prof-int",
   "Beginner": "prof-beg"

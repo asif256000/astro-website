@@ -5,25 +5,27 @@ import { getData } from '../utils/db.js';
 import { getLogo, logoFitProps } from '../utils/logos';
 import { formatDate as formatDateShared, isFutureDate } from '../utils/format';
 
-const { basic_info, education, experience } = getData({
+const { education, experience } = getData({
 	education: 'SELECT * FROM education WHERE fk_user = ?',
 	experience: 'SELECT * FROM experience WHERE fk_user = ?',
 });
 
 // Sort descending by duration_start
-experience.sort((a, b) => new Date(b.duration_start) - new Date(a.duration_start));
-education.sort((a, b) => new Date(b.duration_start) - new Date(a.duration_start));
+const byStartDesc = (a: { duration_start: string }, b: { duration_start: string }) =>
+	new Date(b.duration_start).getTime() - new Date(a.duration_start).getTime();
+experience.sort(byStartDesc);
+education.sort(byStartDesc);
 
 const curr_date = new Date().toISOString().slice(0, 10);
 
 // This page always renders dates as YYYY-Mon-DD, unlike the other pages.
-const formatDate = (dateString) => formatDateShared(dateString, 'YYYY-Mon-DD');
+const formatDate = (dateString: string | null | undefined) => formatDateShared(dateString, 'YYYY-Mon-DD');
 
 // SQLite returns JSON columns as strings.
-const safeParseJSON = (str) => {
+const safeParseJSON = (str: unknown): any => {
     if (!str) return null;
     try {
-        return JSON.parse(str);
+        return JSON.parse(str as string);
     } catch {
         return null;
     }
@@ -31,7 +33,6 @@ const safeParseJSON = (str) => {
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Experience & Education` : "Experience & Education"}
     current_page="experience_education"
 >
     <!-- We no longer need the explicit heading slot as it's handled in Navbar now! -->
@@ -42,7 +43,7 @@ const safeParseJSON = (str) => {
             <div class="list-container">
                 {experience.map(exp => {
                     const parsedDesc = safeParseJSON(exp.description) || {};
-                    const parsedLinks = safeParseJSON(exp.important_links) || {};
+                    const parsedLinks: { [title: string]: string } = safeParseJSON(exp.important_links) || {};
 
                     return (
                         <div class="detail-card glass-panel">
@@ -57,7 +58,7 @@ const safeParseJSON = (str) => {
                                 </div>
                                 <div class="title-box">
                                     <h3 class="role-title">{exp.title}</h3>
-                                    <h4 class="company-name">{exp.company} — {exp.location}</h4>
+                                    <h4 class="company-name">{exp.company} ({exp.location})</h4>
                                     <span class="duration-badge">
                                         {formatDate(exp.duration_start)}{isFutureDate(exp.duration_start) ? ' (exp)' : ''} to {exp.duration_end ? `${formatDate(exp.duration_end)}${isFutureDate(exp.duration_end) ? ' (exp)' : ''}` : 'Present'}
                                     </span>
@@ -114,7 +115,7 @@ const safeParseJSON = (str) => {
                                 </div>
                                 <div class="title-box">
                                     <h3 class="role-title">{edu.degree} in {edu.major}</h3>
-                                    <h4 class="company-name">{edu.institution} — {edu.location}</h4>
+                                    <h4 class="company-name">{edu.institution} ({edu.location})</h4>
                                     <span class="duration-badge">
                                         {formatDate(edu.duration_start)}{isFutureDate(edu.duration_start) ? ' (exp)' : ''} to {edu.duration_end ? `${formatDate(edu.duration_end)}${isFutureDate(edu.duration_end) ? ' (exp)' : ''}` : 'Present'}
                                     </span>

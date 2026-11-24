@@ -4,16 +4,15 @@ import { getData } from '../utils/db.js';
 import Card from '../components/Card.astro';
 import { formatDate as formatDateShared, isFutureDate } from '../utils/format';
 
-const { basic_info, projects, certifications } = getData({
+const { projects, certifications } = getData({
 	projects: 'SELECT * FROM projects WHERE fk_user = ?',
 	certifications: 'SELECT * FROM certifications WHERE fk_user = ?',
 });
 
-const formatDate = (dateString) => formatDateShared(dateString, 'YYYY-MM-DD');
+const formatDate = (dateString: string | null | undefined) => formatDateShared(dateString, 'YYYY-MM-DD');
 ---
 
 <BaseLayout 
-    title={basic_info ? `${basic_info.name.split(" ")[0]}'s Projects & Certifications` : "Projects & Certifications"}
     current_page="projects_certificates"
 >
     <!-- Heading handled by Navbar -->

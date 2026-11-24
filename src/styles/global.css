@@ -187,7 +187,7 @@ hr {
   margin: 2rem 0;
 }
 
-/* Logo-box: fixed 80×80 flex container — centers any logo regardless of aspect ratio */
+/* Logo-box: fixed 80×80 flex container - centers any logo regardless of aspect ratio */
 .logo-box {
   width: 80px;
   height: 80px;
@@ -203,7 +203,7 @@ hr {
 .logo-box img {
   max-width: 80px;
   max-height: 80px;
-  min-height: 52px;  /* ~65% floor — wide logos get visible height */
+  min-height: 52px;  /* ~65% floor - wide logos get visible height */
   width: auto;
   object-fit: fill;  /* slight distortion accepted over invisible logo */
 }
@@ -259,3 +259,25 @@ hr {
   background-clip: text;
 }
 
+
+/* ---------------------------------------------------------------------------
+   Screen-reader-only utility.
+
+   Used for the per-page <h1> that BaseLayout injects. Every page needs exactly
+   one h1 for search engines and screen-reader navigation, but this design
+   communicates page identity through the navbar instead of a visible page
+   title, so the heading is exposed to assistive tech and crawlers without
+   altering the layout. Clip-based (not display:none / visibility:hidden),
+   which keeps it in the accessibility tree.
+   --------------------------------------------------------------------------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
