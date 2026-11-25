@@ -7,10 +7,14 @@ import { formatDate, isFutureDate } from '../utils/format';
 import Card from '../components/Card.astro';
 import SkillSection from '../components/SkillSection.astro';
 
+// The skills query returns one row per skill name on purpose: duplicate rows
+// have appeared in this table before and rendered the same badge twice in the
+// grid. See docs/notes.local.md#skills-duplicates.
 const { basic_info, education, experience, skills, projects, certifications, honors_and_awards, interests, resume } = getData({
 	education: 'SELECT * FROM education WHERE fk_user = ?',
 	experience: 'SELECT * FROM experience WHERE fk_user = ?',
-	skills: 'SELECT * FROM skills WHERE fk_user = ?',
+	skills: `SELECT skill, subcategory, proficiency FROM skills s
+		WHERE fk_user = ? AND id = (SELECT MIN(id) FROM skills t WHERE t.skill = s.skill)`,
 	projects: 'SELECT * FROM projects WHERE fk_user = ?',
 	certifications: 'SELECT * FROM certifications WHERE fk_user = ?',
 	honors_and_awards: 'SELECT * FROM honors_and_awards WHERE fk_user = ?',
